@@ -35,15 +35,15 @@ public abstract class BloatedTierBuff : ModBuff
 
         tip = Tier switch
         {
-            1 => "Your body is visibly swollen, forcing your weight 1 stage higher. Further exposure can worsen it.",
-            2 => "The swelling is getting worse, forcing your weight 2 stages higher.",
-            3 => "Severe distension forces your weight 3 stages higher.",
-            4 => "Your body is heavily engorged, forcing your weight 4 stages higher.",
-            5 => "The pressure keeps building, forcing your weight 5 stages higher.",
-            6 => "You've ballooned dramatically, forcing your weight 6 stages higher.",
-            7 => "Your bloating is overwhelming, forcing your weight 7 stages higher.",
-            8 => "Extreme hyperinflation forces your weight 8 stages higher.",
-            _ => "You are bloated beyond control, forcing your weight to Blob status.",
+            1 => "I feel swollen all over... I'm being forced one weight stage heavier. More exposure could make this worse.",
+            2 => "I'm swelling even more... I've been pushed two weight stages above my normal size.",
+            3 => "My body feels badly distended... I've been forced three weight stages heavier.",
+            4 => "I can feel myself getting heavier by the second... I'm four weight stages above normal now.",
+            5 => "There's so much pressure building inside me... I've been forced five weight stages heavier.",
+            6 => "I'm ballooning out of control... I've been pushed six weight stages above my normal size.",
+            7 => "I'm getting far too big to move properly... I've been forced seven weight stages heavier.",
+            8 => "I can barely do anything at this size... I've been pushed eight weight stages above normal.",
+            _ => "I can't contain any more... I've been forced all the way into Blob status.",
         };
     }
 }
@@ -174,16 +174,26 @@ public class BloatedPlayer : ModPlayer
             return;
         }
 
-        int naturalStage = Math.Clamp(_underlyingWeight.GetStage(), WeightStage.Regular, WeightStage.Blob);
-
-        // The floor can rise with real weight gain, but it cannot fall while the chain is active.
-        // Weight loss is still recorded in _underlyingWeight and becomes visible when Bloated ends.
-        _minimumNaturalStage = Math.Max(_minimumNaturalStage, naturalStage);
-
-        Weight forcedWeight = GetForcedWeight(_underlyingWeight, tier, _minimumNaturalStage);
-        wg.SetWeight(forcedWeight, false);
-        _lastForcedWeight = wg.Weight;
+        UpdateMinimumNaturalStage();
+        EnforceForcedWeight(wg, tier);
         _previousTier = tier;
+    }
+
+    public override void PostUpdate()
+    {
+        if (!Player.TryGetModPlayer(out WgPlayer wg) || !wg.OwnsPlayer() || !_trackingUnderlyingWeight || Player.dead)
+            return;
+
+        int tier = GetActiveTier(out _);
+        if (tier <= 0)
+            return;
+
+        // Movement-based weight loss happens after PostUpdateBuffs. Capture that real change here,
+        // then restore the forced Bloated stage before the frame finishes. This prevents grappling
+        // hooks and other sharp movement changes from making the displayed weight oscillate.
+        CaptureUnderlyingWeightChange(wg);
+        UpdateMinimumNaturalStage();
+        EnforceForcedWeight(wg, tier);
     }
 
     void BeginTracking(WgPlayer wg)
@@ -198,10 +208,26 @@ public class BloatedPlayer : ModPlayer
     {
         // Anything that changed the displayed weight after the previous Bloated enforcement
         // belongs to the real underlying weight. This includes potions, enemy gain, digestion,
-        // and movement-based weight loss. Crucially, we never subtract an old temporary mass.
+        // and movement-based weight loss. Bloated itself never subtracts temporary mass.
         Mass delta = wg.Weight.Mass - _lastForcedWeight.Mass;
         if (MathF.Abs(delta) > 0.0001f)
             _underlyingWeight = Weight.Clamp(_underlyingWeight + delta);
+    }
+
+    void UpdateMinimumNaturalStage()
+    {
+        int naturalStage = Math.Clamp(_underlyingWeight.GetStage(), WeightStage.Regular, WeightStage.Blob);
+
+        // The floor can rise with real weight gain, but it cannot fall while the chain is active.
+        // Weight loss is still recorded in _underlyingWeight and becomes visible when Bloated ends.
+        _minimumNaturalStage = Math.Max(_minimumNaturalStage, naturalStage);
+    }
+
+    void EnforceForcedWeight(WgPlayer wg, int tier)
+    {
+        Weight forcedWeight = GetForcedWeight(_underlyingWeight, tier, _minimumNaturalStage);
+        wg.SetWeight(forcedWeight, false);
+        _lastForcedWeight = wg.Weight;
     }
 
     static Weight GetForcedWeight(Weight underlyingWeight, int tier, int minimumNaturalStage)
