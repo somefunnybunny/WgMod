@@ -9,7 +9,7 @@ namespace WgMod.Common.Players;
 
 public class HeavyFootstepPlayer : ModPlayer
 {
-    float _stepDistance;
+    int _lastLegFrame = -1;
     int _screenShakeTime;
     int _screenShakeMagnitude;
 
@@ -22,28 +22,29 @@ public class HeavyFootstepPlayer : ModPlayer
         }
 
         int stage = wg.Weight.GetStage();
-        if (stage < WeightStage.Obese || Player.mount.Active || Player.velocity.Y != 0f || Player.wet)
+        if (stage < WeightStage.Obese || Player.mount.Active || Player.velocity.Y != 0f || Player.wet || MathF.Abs(Player.velocity.X) < 0.05f)
         {
             ResetStepTracking();
             return;
         }
 
-        float horizontalSpeed = MathF.Abs(Player.velocity.X);
-        if (horizontalSpeed < 0.05f)
+        if (Player.legFrame.Height <= 0)
         {
-            _stepDistance = 0f;
+            ResetStepTracking();
             return;
         }
 
-        _stepDistance += horizontalSpeed;
-
-        // Heavier stages take shorter, more forceful steps, so impacts happen slightly more often.
-        float strideDistance = MathF.Max(24f, 44f - (stage - WeightStage.Obese) * 4f);
-        if (_stepDistance < strideDistance)
+        int legFrame = Player.legFrame.Y / Player.legFrame.Height;
+        if (legFrame == _lastLegFrame)
             return;
 
-        _stepDistance %= strideDistance;
-        DoHeavyStep(stage);
+        _lastLegFrame = legFrame;
+
+        // Vanilla grounded walking cycles through the leg animation frames. These two frames
+        // correspond to the alternating planted-foot portions of the normal walk cycle, so the
+        // impact is driven by the visible animation rather than accumulated movement distance.
+        if (legFrame == 10 || legFrame == 17)
+            DoHeavyStep(stage);
     }
 
     void DoHeavyStep(int stage)
@@ -89,6 +90,6 @@ public class HeavyFootstepPlayer : ModPlayer
 
     void ResetStepTracking()
     {
-        _stepDistance = 0f;
+        _lastLegFrame = -1;
     }
 }
