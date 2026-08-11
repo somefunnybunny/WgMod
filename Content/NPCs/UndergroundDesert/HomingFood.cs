@@ -35,6 +35,7 @@ public class HomingFood : ModNPC
 
     int _itemIndex;
     int _itemId;
+    bool _fedPlayer;
 
     public override void SetDefaults()
     {
@@ -66,7 +67,7 @@ public class HomingFood : ModNPC
 
     public override float SpawnChance(NPCSpawnInfo spawnInfo)
     {
-        return 0.1f;
+        return 0.1f * OverindulgenceChain.GetSpawnMultiplier(spawnInfo.Player);
     }
 
     public override void OnSpawn(IEntitySource source)
@@ -98,12 +99,7 @@ public class HomingFood : ModNPC
         {
             Player player = Main.player[NPC.target];
             if (NPC.getRect().Intersects(player.getRect()))
-            {
-                player.AddBuff(ModContent.BuffType<ForceFed>(), (int)(ForceFed.TicksPerCycle * 1.5f));
-                player.AddBuff(BuffID.WellFed, 60 * 4);
-                SoundEngine.PlaySound(SoundID.Item2, NPC.Center);
-                NPC.life = 0;
-            }
+                FeedPlayer(player);
         }
         Lighting.AddLight(NPC.Center, Color.Purple.ToVector3() * 0.78f);
     }
@@ -130,8 +126,18 @@ public class HomingFood : ModNPC
 
     public override void OnHitPlayer(Player target, Player.HurtInfo hurtInfo)
     {
-        target.AddBuff(ModContent.BuffType<ForceFed>(), (int)(ForceFed.TicksPerCycle * 1.5f));
-        target.AddBuff(BuffID.WellFed, 60 * 4);
+        FeedPlayer(target);
+    }
+
+    void FeedPlayer(Player player)
+    {
+        if (_fedPlayer)
+            return;
+
+        _fedPlayer = true;
+        player.AddBuff(ModContent.BuffType<ForceFed>(), (int)(ForceFed.TicksPerCycle * 1.5f));
+        player.AddBuff(BuffID.WellFed, 60 * 4);
+        OverindulgenceChain.Advance(player);
         SoundEngine.PlaySound(SoundID.Item2, NPC.Center);
         NPC.life = 0;
     }
