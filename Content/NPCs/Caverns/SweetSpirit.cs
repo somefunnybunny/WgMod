@@ -9,6 +9,7 @@ using Terraria.GameContent.Bestiary;
 using Terraria.ID;
 using Terraria.ModLoader;
 using WgMod.Common.Players;
+using WgMod.Content.Buffs.Debuffs;
 
 namespace WgMod.Content.NPCs.Caverns;
 
@@ -62,7 +63,7 @@ public class SweetSpirit : ModNPC
 
     public override float SpawnChance(NPCSpawnInfo spawnInfo)
     {
-        return 0.05f;
+        return 0.05f * PossessionChain.GetSpawnMultiplier(spawnInfo.Player);
     }
 
     public override void DrawBehind(int index)
@@ -150,9 +151,11 @@ public class SweetSpirit : ModNPC
             case State.Possess:
                 if (NPC.HasPlayerTarget && Main.player[NPC.target].TryGetModPlayer(out WgPlayer wg))
                 {
+                    Player player = Main.player[NPC.target];
                     int stage = wg.Weight.GetStage();
                     Mass mass = (Weight.FromStage(stage + 1).Mass - Weight.FromStage(stage).Mass) * 0.5f + 10f;
                     wg.CombatWeightText(wg.AddWeight(mass), false); // Add around half a stage worth of weight
+                    PossessionChain.Advance(player);
                 }
                 NPC.life = 0;
                 break;
