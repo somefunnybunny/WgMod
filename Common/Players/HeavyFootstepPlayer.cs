@@ -49,9 +49,15 @@ public class HeavyFootstepPlayer : ModPlayer
 
     void DoHeavyStep(int stage)
     {
-        int stageOffset = Math.Max(0, stage - WeightStage.Obese);
-        float volume = MathF.Min(1.35f, 0.7f + stageOffset * 0.1f);
-        SoundEngine.PlaySound(WgSounds.Stomp.WithVolumeScale(volume), Player.Bottom);
+        int stageOffset = Math.Clamp(stage - WeightStage.Obese, 0, WeightStage.Blob - WeightStage.Obese);
+
+        // Keep the existing stomp samples, but make the lower stages read as heavy footsteps
+        // rather than full impacts. The sound gradually becomes deeper and louder with size.
+        float[] volumes = { 0.25f, 0.35f, 0.5f, 0.75f, 0.95f, 1.1f };
+        float[] pitches = { 0.35f, 0.25f, 0.12f, 0f, -0.08f, -0.15f };
+        SoundEngine.PlaySound(
+            WgSounds.Stomp.WithVolumeScale(volumes[stageOffset]).WithPitchOffset(pitches[stageOffset]),
+            Player.Bottom);
 
         int dustCount = 5 + stageOffset * 3;
         float dustWidth = MathF.Max(Player.width, 28f + stageOffset * 12f);
