@@ -17,6 +17,35 @@ public abstract class BloatedTierBuff : ModBuff
         Main.pvpBuff[Type] = true;
         Main.buffNoSave[Type] = true;
     }
+
+    public override void ModifyBuffText(ref string buffName, ref string tip, ref int rare)
+    {
+        buffName = Tier switch
+        {
+            1 => "Bloated",
+            2 => "Swollen",
+            3 => "Distended",
+            4 => "Engorged",
+            5 => "Overinflated",
+            6 => "Ballooned",
+            7 => "Overblown",
+            8 => "Hyperinflated",
+            _ => "Uncontainably Bloated",
+        };
+
+        tip = Tier switch
+        {
+            1 => "Your body is visibly swollen, forcing your weight 1 stage higher. Further exposure can worsen it.",
+            2 => "The swelling is getting worse, forcing your weight 2 stages higher.",
+            3 => "Severe distension forces your weight 3 stages higher.",
+            4 => "Your body is heavily engorged, forcing your weight 4 stages higher.",
+            5 => "The pressure keeps building, forcing your weight 5 stages higher.",
+            6 => "You've ballooned dramatically, forcing your weight 6 stages higher.",
+            7 => "Your bloating is overwhelming, forcing your weight 7 stages higher.",
+            8 => "Extreme hyperinflation forces your weight 8 stages higher.",
+            _ => "You are bloated beyond control, forcing your weight to Blob status.",
+        };
+    }
 }
 
 [Credit(ProjectRole.Programmer, Contributor.maimaichubs)]
@@ -69,7 +98,9 @@ public class BloatedPlayer : ModPlayer
 {
     public const int MaxTimer = 60 * 25;
 
-    Mass _mass;
+    Weight _underlyingWeight;
+    Weight _lastForcedWeight;
+    bool _trackingUnderlyingWeight;
     int _previousTier;
     int _minimumNaturalStage = -1;
 
@@ -107,9 +138,7 @@ public class BloatedPlayer : ModPlayer
 
         if (Player.dead)
         {
-            RemoveTemporaryMass(wg);
-            _previousTier = 0;
-            _minimumNaturalStage = -1;
+            ResetTracking();
             return;
         }
 
@@ -122,59 +151,93 @@ public class BloatedPlayer : ModPlayer
             Player.AddBuff(GetBuffType(tier), MaxTimer);
         }
 
-        // Strip the temporary mass first so wg.Weight represents the player's underlying weight.
-        RemoveTemporaryMass(wg);
-
-        if (tier > 0)
+        if (!_trackingUnderlyingWeight)
         {
-            int naturalStage = Math.Clamp(wg.Weight.GetStage(), WeightStage.Regular, WeightStage.Blob);
+            if (tier <= 0)
+            {
+                _previousTier = 0;
+                return;
+            }
 
-            // Bloated's baseline can move upward as permanent weight is gained, but never downward
-            // while the debuff chain is active. This prevents Weight Loss potions and other instant
-            // reductions from cancelling the forced stage increase before Bloated has decayed away.
-            if (_minimumNaturalStage < 0 || _previousTier <= 0)
-                _minimumNaturalStage = naturalStage;
-            else
-                _minimumNaturalStage = Math.Max(_minimumNaturalStage, naturalStage);
-
-            ApplyTemporaryStageOffset(wg, tier, _minimumNaturalStage);
+            BeginTracking(wg);
         }
         else
         {
-            _minimumNaturalStage = -1;
+            CaptureUnderlyingWeightChange(wg);
         }
 
+        if (tier <= 0)
+        {
+            // Restore the true underlying weight once the final Bloated tier ends.
+            wg.SetWeight(_underlyingWeight, false);
+            ResetTracking();
+            return;
+        }
+
+        int naturalStage = Math.Clamp(_underlyingWeight.GetStage(), WeightStage.Regular, WeightStage.Blob);
+
+        // The floor can rise with real weight gain, but it cannot fall while the chain is active.
+        // Weight loss is still recorded in _underlyingWeight and becomes visible when Bloated ends.
+        _minimumNaturalStage = Math.Max(_minimumNaturalStage, naturalStage);
+
+        Weight forcedWeight = GetForcedWeight(_underlyingWeight, tier, _minimumNaturalStage);
+        wg.SetWeight(forcedWeight, false);
+        _lastForcedWeight = wg.Weight;
         _previousTier = tier;
     }
 
-    void ApplyTemporaryStageOffset(WgPlayer wg, int tier, int minimumNaturalStage)
+    void BeginTracking(WgPlayer wg)
     {
-        Weight naturalWeight = wg.Weight;
-        int naturalStage = Math.Clamp(naturalWeight.GetStage(), WeightStage.Regular, WeightStage.Blob);
+        _underlyingWeight = wg.Weight;
+        _lastForcedWeight = wg.Weight;
+        _minimumNaturalStage = Math.Clamp(_underlyingWeight.GetStage(), WeightStage.Regular, WeightStage.Blob);
+        _trackingUnderlyingWeight = true;
+    }
+
+    void CaptureUnderlyingWeightChange(WgPlayer wg)
+    {
+        // Anything that changed the displayed weight after the previous Bloated enforcement
+        // belongs to the real underlying weight. This includes potions, enemy gain, digestion,
+        // and movement-based weight loss. Crucially, we never subtract an old temporary mass.
+        Mass delta = wg.Weight.Mass - _lastForcedWeight.Mass;
+        if (MathF.Abs(delta) > 0.0001f)
+            _underlyingWeight = Weight.Clamp(_underlyingWeight + delta);
+    }
+
+    static Weight GetForcedWeight(Weight underlyingWeight, int tier, int minimumNaturalStage)
+    {
+        int naturalStage = Math.Clamp(underlyingWeight.GetStage(), WeightStage.Regular, WeightStage.Blob);
         int baselineStage = Math.Max(naturalStage, minimumNaturalStage);
         int targetStage = Math.Min(baselineStage + tier, WeightStage.Blob);
 
         if (targetStage <= naturalStage)
-            return;
+            return underlyingWeight;
 
-        float stageProgress = Math.Clamp(naturalWeight.GetStageFactor(), 0f, 1f);
-        float targetMass;
+        // Preserve progress within a stage when the underlying weight is at the active floor.
+        // If weight loss has pushed the hidden weight below that floor, hold at the start of
+        // the forced stage instead of allowing that loss to partially cancel Bloated.
+        float stageProgress = naturalStage >= baselineStage
+            ? Math.Clamp(underlyingWeight.GetStageFactor(), 0f, 1f)
+            : 0f;
 
         if (targetStage < WeightStage.Blob)
         {
             float targetStart = Weight.FromStage(targetStage).Mass;
             float targetEnd = Weight.FromStage(targetStage + 1).Mass;
-            targetMass = float.Lerp(targetStart, targetEnd, stageProgress);
-        }
-        else
-        {
-            // Blob is the final stage, so preserve progress within its clamped 10 kg range.
-            targetMass = Weight.FromStage(WeightStage.Blob).Mass + 10f * stageProgress;
+            return new Weight(float.Lerp(targetStart, targetEnd, stageProgress));
         }
 
-        Mass start = wg.Weight.Mass;
-        wg.SetWeight(new Weight(targetMass), false);
-        _mass = wg.Weight.Mass - start;
+        // Blob is the final stage, so preserve progress within its clamped 10 kg range.
+        return new Weight(Weight.FromStage(WeightStage.Blob).Mass + 10f * stageProgress);
+    }
+
+    void ResetTracking()
+    {
+        _trackingUnderlyingWeight = false;
+        _previousTier = 0;
+        _minimumNaturalStage = -1;
+        _underlyingWeight = default;
+        _lastForcedWeight = default;
     }
 
     int GetActiveTier(out int buffIndex)
@@ -191,15 +254,6 @@ public class BloatedPlayer : ModPlayer
 
         buffIndex = -1;
         return 0;
-    }
-
-    void RemoveTemporaryMass(WgPlayer wg)
-    {
-        if (_mass <= 0f)
-            return;
-
-        wg.AddWeight(-_mass, false);
-        _mass = 0f;
     }
 
     static int GetBuffType(int tier)
