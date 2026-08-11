@@ -3,6 +3,7 @@ using Terraria;
 using Terraria.Audio;
 using Terraria.ID;
 using Terraria.ModLoader;
+using WgMod.Content.Buffs.Debuffs;
 
 namespace WgMod.Common.Players;
 
@@ -39,13 +40,25 @@ public partial class BuffHitPlayer : ModPlayer
             wg.CombatWeightText(weightGain, true);
     }
 
+    void AddBloated(int timeToAdd, Mass weightGain)
+    {
+        if (!Player.TryGetModPlayer(out WgPlayer wg) || !Player.TryGetModPlayer(out BloatedPlayer bloated))
+            return;
+
+        bloated.ApplyBloated(timeToAdd);
+        weightGain = wg.AddWeight(weightGain);
+        SoundEngine.PlaySound(WgSounds.Gulp, Player.Center);
+        if (weightGain > 0f)
+            wg.CombatWeightText(weightGain, true);
+    }
+
     public override void OnHitByNPC(NPC npc, Player.HurtInfo hurtInfo)
     {
         if (_slimes.Contains(npc.type))
             AddBuff(_slimesBuff, 60 * 6 + (20 * hurtInfo.Damage), hurtInfo.Damage / 10);
 
         if (_bees.Contains(npc.type))
-            AddBuff(_beesBuff, 60 * 10 + (20 * hurtInfo.Damage), hurtInfo.Damage / 8);
+            AddBloated(60 * 10 + (20 * hurtInfo.Damage), hurtInfo.Damage / 8);
 
         if (_feeders.Contains(npc.type))
             AddBuff(_feedersBuff, 60 * 3 + (20 * hurtInfo.Damage), hurtInfo.Damage / 6);
@@ -60,7 +73,7 @@ public partial class BuffHitPlayer : ModPlayer
             AddBuff(_slimesBuff, 60 * 6 + (10 * hurtInfo.Damage), hurtInfo.Damage / 10);
 
         if (_bloaters.Contains(proj.type))
-            AddBuff(_beesBuff, 60 * 10 + (10 * hurtInfo.Damage), hurtInfo.Damage / 8);
+            AddBloated(60 * 10 + (10 * hurtInfo.Damage), hurtInfo.Damage / 8);
 
         if (_feederProjectiles.Contains(proj.type))
             AddBuff(_feedersBuff, 60 * 3 + (10 * hurtInfo.Damage), hurtInfo.Damage / 6);
