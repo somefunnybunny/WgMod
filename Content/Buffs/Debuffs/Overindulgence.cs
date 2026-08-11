@@ -30,11 +30,11 @@ public abstract class OverindulgenceTierBuff : ModBuff
 
         tip = Tier switch
         {
-            1 => "I really shouldn't have eaten that... but now more food keeps finding me.",
-            2 => "I'm already stuffed, yet somehow the thought of another bite is getting harder to resist.",
-            3 => "I keep telling myself I'm full, but the food looks better every time it comes back.",
-            4 => "I want more. I don't care how full I am anymore; if it comes near me, I want it.",
-            _ => "More. I need more. Let it come to me. I can always make room for one more bite... then another...",
+            1 => "That really wasn't so bad... honestly, I wouldn't mind if another one found me.",
+            2 => "I'm getting pretty full, but I still want another. If more food comes to me, I'm not stopping it.",
+            3 => "I'm stuffed and getting heavier, and I know exactly what more will do to me... but I want it anyway.",
+            4 => "Give me more. I don't care how huge or helpless I end up; I want every last bite that finds me.",
+            _ => "More. Keep feeding me. I don't care if I get so big I can't move at all. I want all of it.",
         };
     }
 }
