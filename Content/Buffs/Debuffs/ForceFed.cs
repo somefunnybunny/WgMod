@@ -1,3 +1,4 @@
+using System;
 using Terraria;
 using Terraria.Audio;
 using Terraria.ModLoader;
@@ -10,7 +11,7 @@ namespace WgMod.Content.Buffs.Debuffs;
 public class ForceFed : ModBuff
 {
     public const int TicksPerCycle = 30;
-    public const int FatPerCycle = 2;
+    public const float FatPerCycle = 2f;
     int _cooldown;
 
     public override void SetStaticDefaults()
@@ -28,7 +29,7 @@ public class ForceFed : ModBuff
 
     public override void Update(Player player, ref int buffIndex)
     {
-        if (!player.TryGetModPlayer(out WgPlayer wg))
+        if (!player.TryGetModPlayer(out WgPlayer wg) || !player.TryGetModPlayer(out ForceFedPlayer forceFed))
             return;
 
         if (_cooldown < TicksPerCycle)
@@ -36,9 +37,32 @@ public class ForceFed : ModBuff
         else
         {
             _cooldown = 0;
-            wg.CombatWeightText(FatPerCycle, false);
-            wg.AddStomach(FatPerCycle);
+            float fatPerCycle = forceFed.GetFatPerCycle();
+            wg.CombatWeightText(fatPerCycle, false);
+            wg.AddStomach(fatPerCycle);
             SoundEngine.PlaySound(WgSounds.Gulp, player.Center);
         }
+    }
+}
+
+public class ForceFedPlayer : ModPlayer
+{
+    float _customFatPerCycle;
+
+    public void ApplyCustomForceFed(int duration, float fatPerCycle)
+    {
+        _customFatPerCycle = MathF.Max(0f, fatPerCycle);
+        Player.AddBuff(ModContent.BuffType<ForceFed>(), Math.Max(duration, 1));
+    }
+
+    public float GetFatPerCycle()
+    {
+        return _customFatPerCycle > 0f ? _customFatPerCycle : ForceFed.FatPerCycle;
+    }
+
+    public override void PostUpdateBuffs()
+    {
+        if (!Player.HasBuff(ModContent.BuffType<ForceFed>()))
+            _customFatPerCycle = 0f;
     }
 }
