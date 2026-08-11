@@ -120,16 +120,42 @@ public class BloatedPlayer : ModPlayer
             Player.AddBuff(GetBuffType(tier), MaxTimer);
         }
 
-        if (tier != _previousTier)
+        // Recalculate every frame so each tier remains an exact stage offset even if the
+        // player's underlying permanent weight changes while Bloated is active.
+        RemoveTemporaryMass(wg);
+        if (tier > 0)
+            ApplyTemporaryStageOffset(wg, tier);
+
+        _previousTier = tier;
+    }
+
+    void ApplyTemporaryStageOffset(WgPlayer wg, int tier)
+    {
+        Weight naturalWeight = wg.Weight;
+        int naturalStage = Math.Clamp(naturalWeight.GetStage(), WeightStage.Regular, WeightStage.Blob);
+        int targetStage = Math.Min(naturalStage + tier, WeightStage.Blob);
+
+        if (targetStage <= naturalStage)
+            return;
+
+        float stageProgress = Math.Clamp(naturalWeight.GetStageFactor(), 0f, 1f);
+        float targetMass;
+
+        if (targetStage < WeightStage.Blob)
         {
-            RemoveTemporaryMass(wg);
-            if (tier > 0)
-            {
-                Mass targetMass = Weight.FromStage(tier).Mass - Weight.Base.Mass;
-                _mass = wg.AddWeight(targetMass);
-            }
-            _previousTier = tier;
+            float targetStart = Weight.FromStage(targetStage).Mass;
+            float targetEnd = Weight.FromStage(targetStage + 1).Mass;
+            targetMass = float.Lerp(targetStart, targetEnd, stageProgress);
         }
+        else
+        {
+            // Blob is the final stage, so preserve progress within its clamped 10 kg range.
+            targetMass = Weight.FromStage(WeightStage.Blob).Mass + 10f * stageProgress;
+        }
+
+        Mass start = wg.Weight.Mass;
+        wg.SetWeight(new Weight(targetMass), false);
+        _mass = wg.Weight.Mass - start;
     }
 
     int GetActiveTier(out int buffIndex)
@@ -153,7 +179,7 @@ public class BloatedPlayer : ModPlayer
         if (_mass <= 0f)
             return;
 
-        wg.AddWeight(-_mass);
+        wg.AddWeight(-_mass, false);
         _mass = 0f;
     }
 
