@@ -10,7 +10,6 @@ using Terraria.GameContent;
 using Terraria.GameContent.Bestiary;
 using Terraria.ID;
 using Terraria.ModLoader;
-using Terraria.ModLoader.Utilities;
 using WgMod.Content.Buffs.Debuffs;
 
 namespace WgMod.Content.NPCs.UndergroundDesert;
@@ -60,15 +59,14 @@ public class HomingFood : ModNPC
 
     public override void SetBestiary(BestiaryDatabase database, BestiaryEntry bestiaryEntry)
     {
-        bestiaryEntry.Info.AddRange([
-            BestiaryDatabaseNPCsPopulator.CommonTags.SpawnConditions.Biomes.UndergroundDesert,
+        bestiaryEntry.Info.Add(
             new FlavorTextBestiaryInfoElement(Mod.GetLocalizationKey("Bestiary." + nameof(HomingFood)))
-        ]);
+        );
     }
 
     public override float SpawnChance(NPCSpawnInfo spawnInfo)
     {
-        return SpawnCondition.DesertCave.Chance * 0.1f;
+        return 0.1f;
     }
 
     public override void OnSpawn(IEntitySource source)
