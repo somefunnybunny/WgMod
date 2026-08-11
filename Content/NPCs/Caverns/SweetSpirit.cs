@@ -8,7 +8,6 @@ using Terraria.GameContent;
 using Terraria.GameContent.Bestiary;
 using Terraria.ID;
 using Terraria.ModLoader;
-using Terraria.ModLoader.Utilities;
 using WgMod.Common.Players;
 
 namespace WgMod.Content.NPCs.Caverns;
@@ -56,15 +55,14 @@ public class SweetSpirit : ModNPC
 
     public override void SetBestiary(BestiaryDatabase database, BestiaryEntry bestiaryEntry)
     {
-        bestiaryEntry.Info.AddRange([
-            BestiaryDatabaseNPCsPopulator.CommonTags.SpawnConditions.Biomes.Caverns,
+        bestiaryEntry.Info.Add(
             new FlavorTextBestiaryInfoElement(Mod.GetLocalizationKey("Bestiary." + nameof(SweetSpirit)))
-        ]);
+        );
     }
 
     public override float SpawnChance(NPCSpawnInfo spawnInfo)
     {
-        return SpawnCondition.Cavern.Chance * 0.05f;
+        return 0.05f;
     }
 
     public override void DrawBehind(int index)
