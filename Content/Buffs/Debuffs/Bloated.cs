@@ -71,6 +71,7 @@ public class BloatedPlayer : ModPlayer
 
     Mass _mass;
     int _previousTier;
+    int _minimumNaturalStage = -1;
 
     public void ApplyBloated(int timeToAdd)
     {
@@ -108,6 +109,7 @@ public class BloatedPlayer : ModPlayer
         {
             RemoveTemporaryMass(wg);
             _previousTier = 0;
+            _minimumNaturalStage = -1;
             return;
         }
 
@@ -120,20 +122,37 @@ public class BloatedPlayer : ModPlayer
             Player.AddBuff(GetBuffType(tier), MaxTimer);
         }
 
-        // Recalculate every frame so each tier remains an exact stage offset even if the
-        // player's underlying permanent weight changes while Bloated is active.
+        // Strip the temporary mass first so wg.Weight represents the player's underlying weight.
         RemoveTemporaryMass(wg);
+
         if (tier > 0)
-            ApplyTemporaryStageOffset(wg, tier);
+        {
+            int naturalStage = Math.Clamp(wg.Weight.GetStage(), WeightStage.Regular, WeightStage.Blob);
+
+            // Bloated's baseline can move upward as permanent weight is gained, but never downward
+            // while the debuff chain is active. This prevents Weight Loss potions and other instant
+            // reductions from cancelling the forced stage increase before Bloated has decayed away.
+            if (_minimumNaturalStage < 0 || _previousTier <= 0)
+                _minimumNaturalStage = naturalStage;
+            else
+                _minimumNaturalStage = Math.Max(_minimumNaturalStage, naturalStage);
+
+            ApplyTemporaryStageOffset(wg, tier, _minimumNaturalStage);
+        }
+        else
+        {
+            _minimumNaturalStage = -1;
+        }
 
         _previousTier = tier;
     }
 
-    void ApplyTemporaryStageOffset(WgPlayer wg, int tier)
+    void ApplyTemporaryStageOffset(WgPlayer wg, int tier, int minimumNaturalStage)
     {
         Weight naturalWeight = wg.Weight;
         int naturalStage = Math.Clamp(naturalWeight.GetStage(), WeightStage.Regular, WeightStage.Blob);
-        int targetStage = Math.Min(naturalStage + tier, WeightStage.Blob);
+        int baselineStage = Math.Max(naturalStage, minimumNaturalStage);
+        int targetStage = Math.Min(baselineStage + tier, WeightStage.Blob);
 
         if (targetStage <= naturalStage)
             return;
