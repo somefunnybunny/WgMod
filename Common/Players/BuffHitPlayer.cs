@@ -10,6 +10,8 @@ namespace WgMod.Common.Players;
 
 public partial class BuffHitPlayer : ModPlayer
 {
+    const float GreenSlimeClassicLife = 14f;
+
     void AddNPCs(HashSet<int> table, string mod, params string[] npcs)
     {
         if (!ModLoader.TryGetMod(mod, out Mod foundMod))
@@ -60,10 +62,9 @@ public partial class BuffHitPlayer : ModPlayer
         float size = MathF.Sqrt(npc.width * npc.height);
         int durationSeconds = Math.Clamp((int)MathF.Round(size / 8f), 3, 60);
 
-        // Green Slime is the 1 kg/cycle reference. Square-root HP scaling keeps huge boss HP
-        // meaningful without making every 30-tick feeding cycle explode into four-digit gains.
-        int greenSlimeLife = ContentSamples.NpcsByNetId[NPCID.GreenSlime].lifeMax;
-        float fatPerCycle = MathF.Sqrt(MathF.Max(1f, npc.lifeMax) / MathF.Max(1f, greenSlimeLife));
+        // Green Slime's Classic 14 HP is the permanent 1 kg/cycle reference. Using a fixed
+        // baseline means Expert/Master and progression HP scaling genuinely increase potency.
+        float fatPerCycle = MathF.Sqrt(MathF.Max(1f, npc.lifeMax) / GreenSlimeClassicLife);
 
         if (Player.TryGetModPlayer(out ForceFedPlayer forceFed))
             forceFed.ApplyCustomForceFed(durationSeconds * 60, fatPerCycle);
