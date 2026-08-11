@@ -59,7 +59,17 @@ public partial class BuffHitPlayer : ModPlayer
         // unusually wide or tall slimes from producing absurd durations from one dimension alone.
         float size = MathF.Sqrt(npc.width * npc.height);
         int durationSeconds = Math.Clamp((int)MathF.Round(size / 8f), 3, 60);
-        Player.AddBuff(_feedersBuff, durationSeconds * 60);
+
+        // Green Slime is the 1 kg/cycle reference. Square-root HP scaling keeps huge boss HP
+        // meaningful without making every 30-tick feeding cycle explode into four-digit gains.
+        int greenSlimeLife = ContentSamples.NpcsByNetId[NPCID.GreenSlime].lifeMax;
+        float fatPerCycle = MathF.Sqrt(MathF.Max(1f, npc.lifeMax) / MathF.Max(1f, greenSlimeLife));
+
+        if (Player.TryGetModPlayer(out ForceFedPlayer forceFed))
+            forceFed.ApplyCustomForceFed(durationSeconds * 60, fatPerCycle);
+        else
+            Player.AddBuff(_feedersBuff, durationSeconds * 60);
+
         SoundEngine.PlaySound(WgSounds.Gulp, Player.Center);
 
         // Remove the slime without killing it, so this behaves like consumption rather than a kill:
