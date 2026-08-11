@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Terraria;
 using Terraria.Audio;
@@ -52,10 +53,29 @@ public partial class BuffHitPlayer : ModPlayer
             wg.CombatWeightText(weightGain, true);
     }
 
+    void ConsumeSlime(NPC npc)
+    {
+        // Scale Force Fed duration from the slime's actual hitbox size. Geometric mean keeps
+        // unusually wide or tall slimes from producing absurd durations from one dimension alone.
+        float size = MathF.Sqrt(npc.width * npc.height);
+        int durationSeconds = Math.Clamp((int)MathF.Round(size / 8f), 3, 60);
+        Player.AddBuff(_feedersBuff, durationSeconds * 60);
+        SoundEngine.PlaySound(WgSounds.Gulp, Player.Center);
+
+        // Remove the slime without killing it, so this behaves like consumption rather than a kill:
+        // no death effects, loot, boss drops, or split-spawns from Mother/Corrupt-type slimes.
+        npc.active = false;
+        if (Main.netMode == NetmodeID.Server)
+            NetMessage.SendData(MessageID.SyncNPC, number: npc.whoAmI);
+    }
+
     public override void OnHitByNPC(NPC npc, Player.HurtInfo hurtInfo)
     {
         if (_slimes.Contains(npc.type))
-            AddBuff(_slimesBuff, 60 * 6 + (20 * hurtInfo.Damage), hurtInfo.Damage / 10);
+        {
+            ConsumeSlime(npc);
+            return;
+        }
 
         if (_bees.Contains(npc.type))
             AddBloated(60 * 10 + (20 * hurtInfo.Damage), hurtInfo.Damage / 8);
