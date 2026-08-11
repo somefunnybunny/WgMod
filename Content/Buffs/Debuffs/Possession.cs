@@ -30,11 +30,11 @@ public abstract class PossessionTierBuff : ModBuff
 
         tip = Tier switch
         {
-            1 => "Something brushed against my thoughts... and now I can feel more of them looking for me.",
-            2 => "There's a presence following me. No... more than one. They know where to find me now.",
-            3 => "I can feel one of them inside me, leaning against my thoughts and making room for the next.",
-            4 => "My thoughts keep slipping. I don't know which ones are mine anymore, and the spirits keep coming closer.",
-            _ => "We can feel them coming. We want them closer. There is still room in us for more... there is always room.",
+            1 => "That wasn't so bad... having one inside me was strange, but I wouldn't mind another.",
+            2 => "I can feel the spirits gathering again. Good. I want to know what happens if I let more of them in.",
+            3 => "They're making me heavier every time, and I know where this is going... but I want them to keep coming.",
+            4 => "Let them in. I don't care if they make me too heavy to move; I want to feel myself fill up with them again.",
+            _ => "More spirits. All of them. I don't care if they leave me completely helpless. I want them inside me until I can't take another step.",
         };
     }
 }
