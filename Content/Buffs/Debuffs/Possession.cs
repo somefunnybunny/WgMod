@@ -30,11 +30,11 @@ public abstract class PossessionTierBuff : ModBuff
 
         tip = Tier switch
         {
-            1 => "That wasn't so bad... having one inside me was strange, but I wouldn't mind another.",
-            2 => "I can feel the spirits gathering again. Good. I want to know what happens if I let more of them in.",
-            3 => "They're making me heavier every time, and I know where this is going... but I want them to keep coming.",
-            4 => "Let them in. I don't care if they make me too heavy to move; I want to feel myself fill up with them again.",
-            _ => "More spirits. All of them. I don't care if they leave me completely helpless. I want them inside me until I can't take another step.",
+            1 => "That wasn't so bad... my belly feels a little fuller after having one inside me. I wouldn't mind another.",
+            2 => "I can feel the spirits gathering again. Good. I want to feel my stomach swell heavier with another one.",
+            3 => "My belly keeps getting bigger and heavier every time they enter me... and I want them to keep coming.",
+            4 => "Let them in. I want my stomach fuller, rounder, heavier. I don't care if their weight makes me too heavy to move.",
+            _ => "More spirits. All of them. Fill my belly until it's enormous. I don't care if the weight leaves me completely helpless.",
         };
     }
 }
