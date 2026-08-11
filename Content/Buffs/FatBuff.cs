@@ -58,6 +58,23 @@ public class FatBuff : WgBuffBase
         }
         if (stage >= WeightStage.Blob)
             tip += "\n" + this.GetLocalization("CantMoveArms");
+
+        string admiration = stage switch
+        {
+            WeightStage.Chubby => "I'm getting soft... honestly, it looks kind of cute on me.",
+            WeightStage.Overweight => "I'm noticeably bigger now, and I really like how much softer I look.",
+            WeightStage.Fat => "I'm properly fat now... I can't help admiring how full and plush I've gotten.",
+            WeightStage.Obese => "I'm huge, soft, and impossible to ignore. I look amazing like this.",
+            WeightStage.MorbidlyObese => "I'm absolutely enormous now... every part of me looks so indulgently oversized.",
+            WeightStage.BarelyMobile => "Moving is getting difficult, but seeing just how massive I've become is almost worth it.",
+            WeightStage.Immobile => "I can barely move at all... and I still can't stop admiring how spectacularly huge I've gotten.",
+            WeightStage.Encumbered => "I'm completely overwhelmed by my own size now, and somehow I love the sight of it even more.",
+            WeightStage.Blob => "I'm an enormous, helpless blob of softness... and I look magnificent.",
+            _ => "",
+        };
+
+        if (!string.IsNullOrEmpty(admiration))
+            tip += "\n" + admiration;
     }
 
     public override void Update(Player player, ref int buffIndex)
