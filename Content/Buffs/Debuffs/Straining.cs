@@ -79,7 +79,7 @@ public class StrainingPlayer : ModPlayer
 
     public void AddFedMass(float mass, StrainingSource source)
     {
-        if (mass <= 0f || !IsBlobbed())
+        if (mass <= 0f || !IsStrainingStage())
             return;
 
         _fedMassPressure += mass;
@@ -94,7 +94,7 @@ public class StrainingPlayer : ModPlayer
 
     public void AddBloatedTime(int time)
     {
-        if (time <= 0 || !IsBlobbed())
+        if (time <= 0 || !IsStrainingStage())
             return;
 
         _bloatedTimePressure += time;
@@ -109,7 +109,7 @@ public class StrainingPlayer : ModPlayer
 
     public void AddSugarSpiritPossession()
     {
-        if (!IsBlobbed())
+        if (!IsStrainingStage())
             return;
 
         _sugarSpiritPressure++;
@@ -130,7 +130,7 @@ public class StrainingPlayer : ModPlayer
             return;
         }
 
-        if (!IsBlobbed())
+        if (!IsStrainingStage())
         {
             ResetAll();
             return;
@@ -172,7 +172,12 @@ public class StrainingPlayer : ModPlayer
             return;
 
         if (Player.TryGetModPlayer(out WgPlayer wg))
-            width = WeightValues.GetHitboxWidthInTiles(wg.Weight.GetStage()) * 16 - 12;
+        {
+            int stage = wg.Weight.GetStage();
+            width = WeightValues.GetHitboxWidthInTiles(stage) * 16 - 12;
+            if (stage >= WeightStage.MegaBlob)
+                height = Player.defaultHeight * 2;
+        }
     }
 
     void ResizeHitbox(int targetWidth, int targetHeight, bool forceShrink = false)
@@ -205,9 +210,9 @@ public class StrainingPlayer : ModPlayer
         Player.AddBuff(ModContent.BuffType<Straining>(), 2);
     }
 
-    bool IsBlobbed()
+    bool IsStrainingStage()
     {
-        return Player.TryGetModPlayer(out WgPlayer wg) && wg.Weight.GetStage() >= WeightStage.Blob;
+        return Player.TryGetModPlayer(out WgPlayer wg) && wg.Weight.GetStage() >= WeightStage.MegaBlob;
     }
 
     void Explode(StrainingSource source)
