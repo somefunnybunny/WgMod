@@ -39,13 +39,20 @@ public class FeedingManEater : ModNPC
 
     public override float SpawnChance(NPCSpawnInfo spawnInfo)
     {
-        if (!spawnInfo.Player.ZoneJungle || spawnInfo.Player.dead)
+        Player player = spawnInfo.Player;
+        if (!player.ZoneJungle || player.dead)
             return 0f;
 
-        if (spawnInfo.Player.TryGetModPlayer(out WgPlayer wg) && wg.Weight.GetStage() >= WeightStage.MegaBlob)
+        // Keep this in the real Underground Jungle/Cavern Jungle rather than the surface biome.
+        if (!player.ZoneDirtLayerHeight && !player.ZoneRockLayerHeight)
             return 0f;
 
-        return 0.004f;
+        if (player.TryGetModPlayer(out WgPlayer wg) && wg.Weight.GetStage() >= WeightStage.MegaBlob)
+            return 0f;
+
+        // This is intentionally common. The old 0.004 weight made it effectively invisible next
+        // to ordinary Jungle enemies; 0.18 lets it compete with the regular Man Eater population.
+        return 0.18f;
     }
 
     public override bool CanHitPlayer(Player target, ref int cooldownSlot)
@@ -61,8 +68,6 @@ public class FeedingManEater : ModNPC
             return;
         }
 
-        // After successfully feeding someone all the way to Mega Blob, the plant goes docile
-        // instead of immediately reacquiring that same helpless target.
         if (_releasedPlayer >= 0)
         {
             NPC.target = 255;
