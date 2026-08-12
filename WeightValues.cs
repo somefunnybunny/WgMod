@@ -26,6 +26,7 @@ public static class WeightValues
         7 => 6,
         8 => 7,
         9 => 8,
+        10 => 16,
         _ => 2,
     };
 }
