@@ -39,7 +39,7 @@ public class FatBuff : WgBuffBase
         if (!Main.LocalPlayer.TryGetModPlayer(out WgPlayer wg))
             return;
         int stage = wg.Weight.GetStage();
-        buffName = this.GetLocalizedValue("Stages.Name" + stage);
+        buffName = stage >= WeightStage.MegaBlob ? "Mega Blob" : this.GetLocalizedValue("Stages.Name" + stage);
         if (WgServerConfig.Instance.DisableFatBuffs)
         {
             tip = this.GetLocalizedValue("DisabledBuffs");
@@ -58,6 +58,8 @@ public class FatBuff : WgBuffBase
         }
         if (stage >= WeightStage.Blob)
             tip += "\n" + this.GetLocalization("CantMoveArms");
+        if (stage >= WeightStage.MegaBlob)
+            tip += "\nI can't use any items at this size.";
 
         string admiration = stage switch
         {
@@ -70,6 +72,7 @@ public class FatBuff : WgBuffBase
             WeightStage.Immobile => "I can barely move at all... and I still can't stop admiring how spectacularly huge I've gotten.",
             WeightStage.Encumbered => "I'm completely overwhelmed by my own size now, and somehow I love the sight of it even more.",
             WeightStage.Blob => "I'm an enormous, helpless blob of softness... and I look magnificent.",
+            WeightStage.MegaBlob => "I've swollen far beyond even being a blob now... I'm twice as enormous, completely helpless, and there is simply no hiding how absurdly huge I've become.",
             _ => "",
         };
 
