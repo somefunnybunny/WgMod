@@ -68,7 +68,6 @@ public partial class WgPlayer
             }
         }
 
-        // Can't find a better way to change the draw position
         _lastGfxOffY = Player.gfxOffY;
         Player.gfxOffY += _addedGfxOffY;
 
@@ -95,12 +94,10 @@ public partial class WgPlayer
             float progress = Math.Clamp(Weight.GetStageFactor(), 0f, 1f);
             if (stage == WeightStage.Blob)
             {
-                // Blob grows continuously all the way into the doubled Mega Blob state.
                 scale = float.Lerp(1f, 2f, progress);
             }
             else
             {
-                // Earlier stages swell subtly toward the next sprite instead of snapping there.
                 float growth = layerType switch
                 {
                     SpriteSet.LayerType.Belly => 0.12f,
@@ -117,6 +114,23 @@ public partial class WgPlayer
             scale *= straining.SizeFactor;
 
         return scale;
+    }
+
+    internal float GetVisualGrowthLift(SpriteSet.LayerType layerType)
+    {
+        int stage = Weight.GetStage();
+        if (stage < WeightStage.Blob)
+            return 0f;
+
+        float scale = GetVisualGrowthScale(layerType);
+        float extraScale = MathF.Max(0f, scale - 1f);
+        float lift = Player.defaultHeight * 0.75f * extraScale;
+
+        // Keep the face visibly above the enlarged torso instead of letting it disappear into it.
+        if (layerType == SpriteSet.LayerType.Fixed)
+            lift *= 1.12f;
+
+        return -lift * Player.gravDir;
     }
 
     void UpdateJiggle()
@@ -164,11 +178,5 @@ public partial class WgPlayer
     {
         if (Player.isDisplayDollOrInanimate)
             drawInfo.Position.Y += Player.gfxOffY;
-        /*if (Player.mount.Active)
-        {
-            drawInfo.Position.Y += drawInfo.mountOffSet;
-            drawInfo.mountOffSet *= WeightValues.GetMountScale(Weight.GetStage());
-            drawInfo.Position.Y -= drawInfo.mountOffSet;
-        }*/
     }
 }
