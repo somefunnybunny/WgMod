@@ -71,6 +71,9 @@ public class StrainingPlayer : ModPlayer
     int _bloatedTimePressure;
     int _sugarSpiritPressure;
     bool _exploded;
+    bool _hitboxScaled;
+    int _baseHitboxWidth;
+    int _baseHitboxHeight;
 
     public int Stacks { get; private set; }
     public float SizeFactor => 1f + SizePerStack * Stacks;
@@ -138,6 +141,11 @@ public class StrainingPlayer : ModPlayer
             Player.AddBuff(ModContent.BuffType<Straining>(), 2);
     }
 
+    public override void PostUpdate()
+    {
+        UpdateScaledHitbox();
+    }
+
     public override void TransformDrawData(ref PlayerDrawSet drawInfo)
     {
         if (Stacks <= 0)
@@ -145,6 +153,7 @@ public class StrainingPlayer : ModPlayer
 
         float scaleFactor = SizeFactor;
         Vector2 center = drawInfo.Center;
+        Vector2 anchor = center + new Vector2(0f, Player.height * 0.5f);
 
         for (int i = 0; i < drawInfo.DrawDataCache.Count; i++)
         {
@@ -153,8 +162,8 @@ public class StrainingPlayer : ModPlayer
             if (data.useDestinationRectangle)
             {
                 Rectangle rect = data.destinationRectangle;
-                Vector2 rectCenter = rect.Center.ToVector2();
-                Vector2 scaledCenter = center + (rectCenter - center) * scaleFactor;
+                Vector2 rectCenter = new(rect.Center.X, rect.Center.Y);
+                Vector2 scaledCenter = anchor + (rectCenter - anchor) * scaleFactor;
                 int width = Math.Max(1, (int)MathF.Round(rect.Width * scaleFactor));
                 int height = Math.Max(1, (int)MathF.Round(rect.Height * scaleFactor));
                 data.destinationRectangle = new Rectangle(
@@ -166,11 +175,51 @@ public class StrainingPlayer : ModPlayer
             }
             else
             {
-                data.position = center + (data.position - center) * scaleFactor;
+                data.position = anchor + (data.position - anchor) * scaleFactor;
                 data.scale *= scaleFactor;
             }
 
             drawInfo.DrawDataCache[i] = data;
+        }
+    }
+
+    void UpdateScaledHitbox()
+    {
+        if (Stacks > 0 && !Player.mount.Active && !Player.isLockedToATile)
+        {
+            if (!_hitboxScaled)
+            {
+                _baseHitboxWidth = Player.width;
+                _baseHitboxHeight = Player.height;
+                _hitboxScaled = true;
+            }
+
+            int targetWidth = Math.Max(1, (int)MathF.Round(_baseHitboxWidth * SizeFactor));
+            int targetHeight = Math.Max(1, (int)MathF.Round(_baseHitboxHeight * SizeFactor));
+            ResizeHitbox(targetWidth, targetHeight);
+        }
+        else if (_hitboxScaled)
+        {
+            ResizeHitbox(_baseHitboxWidth, _baseHitboxHeight, true);
+            _hitboxScaled = false;
+        }
+    }
+
+    void ResizeHitbox(int targetWidth, int targetHeight, bool forceShrink = false)
+    {
+        if (Player.width == targetWidth && Player.height == targetHeight)
+            return;
+
+        float centerX = Player.position.X + Player.width * 0.5f;
+        float bottomY = Player.position.Y + Player.height;
+        Vector2 targetPosition = new(centerX - targetWidth * 0.5f, bottomY - targetHeight);
+
+        bool shrinking = targetWidth <= Player.width && targetHeight <= Player.height;
+        if (forceShrink || shrinking || !Collision.SolidCollision(targetPosition, targetWidth, targetHeight))
+        {
+            Player.position = targetPosition;
+            Player.width = targetWidth;
+            Player.height = targetHeight;
         }
     }
 
