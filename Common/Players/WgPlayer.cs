@@ -97,6 +97,12 @@ public partial class WgPlayer : ModPlayer
         Weight = Weight.Clamp(weight, _finalMaxStage);
         if (Weight.GetStage() != prevStage && effects)
         {
+            // A forced stage jump can otherwise leave the jiggle spring carrying stale
+            // displacement/velocity until player movement disturbs it again.
+            _squishRest = 1f;
+            _squishPos = 1f;
+            _squishVel = 0f;
+
             SoundEngine.PlaySound(WgSounds.Belly, Player.Center);
             Jiggle(3.6f);
         }
