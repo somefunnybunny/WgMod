@@ -156,24 +156,10 @@ public class StrainingPlayer : ModPlayer
         {
             DrawData data = drawInfo.DrawDataCache[i];
 
-            // Keep each established layer position intact. Moving every cached draw entry
-            // around a reconstructed anchor can push custom fat-body layers off-screen.
-            if (data.useDestinationRectangle)
-            {
-                Rectangle rect = data.destinationRectangle;
-                int width = Math.Max(1, (int)MathF.Round(rect.Width * scaleFactor));
-                int height = Math.Max(1, (int)MathF.Round(rect.Height * scaleFactor));
-                data.destinationRectangle = new Rectangle(
-                    rect.Center.X - width / 2,
-                    rect.Center.Y - height / 2,
-                    width,
-                    height
-                );
-            }
-            else
-            {
+            // Preserve special destination-rectangle entries exactly as produced by their
+            // draw layers. Scaling those manually caused some custom fat-body layers to vanish.
+            if (!data.useDestinationRectangle)
                 data.scale *= scaleFactor;
-            }
 
             drawInfo.DrawDataCache[i] = data;
         }
