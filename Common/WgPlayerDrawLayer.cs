@@ -122,8 +122,7 @@ public class WgPlayerDrawLayer : PlayerDrawLayer
                     break;
             }
 
-            // Grow the current stage subtly toward the next one. Blob is the special case:
-            // its progress scales continuously all the way to the doubled Mega Blob state.
+            pos.Y += wg.GetVisualGrowthLift(layer.Type);
             scale *= wg.GetVisualGrowthScale(layer.Type);
 
             Rectangle layerFrame = layer.Frame(set, stageData);
@@ -174,7 +173,8 @@ public class WgPlayerDrawLayer : PlayerDrawLayer
             foreach (SpriteSet.Layer layer in layers)
             {
                 Rectangle layerFrame = layer.Texture.Frame(1, set.FrameCount, 0, stageData.Frame);
-                camera.SpriteBatch.Draw(layer.Texture.Value, layerPos, layerFrame, drawColor, 0f, layerFrame.Size() * 0.5f, wg.GetVisualGrowthScale(layer.Type), effects, 0f);
+                Vector2 liftedPos = layerPos + new Vector2(0f, wg.GetVisualGrowthLift(layer.Type));
+                camera.SpriteBatch.Draw(layer.Texture.Value, liftedPos, layerFrame, drawColor, 0f, layerFrame.Size() * 0.5f, wg.GetVisualGrowthScale(layer.Type), effects, 0f);
             }
         }
 
@@ -184,7 +184,8 @@ public class WgPlayerDrawLayer : PlayerDrawLayer
         int armStage = stageData.Arm;
         Texture2D texture = armStage >= 0 ? set.ArmLayers[armStage].Texture.Value : TextureAssets.Players[drawPlayer.skinVariant, 3].Value;
         Rectangle frame = texture.Frame(9, 4, 2, 0);
-        camera.SpriteBatch.Draw(texture, drawPos + new Vector2(0f, -4f), frame, drawColor, 0f, frame.Size() * 0.5f, wg.GetVisualGrowthScale(SpriteSet.LayerType.Arms), effects, 0f);
+        Vector2 armPos = drawPos + new Vector2(0f, -4f + wg.GetVisualGrowthLift(SpriteSet.LayerType.Arms));
+        camera.SpriteBatch.Draw(texture, armPos, frame, drawColor, 0f, frame.Size() * 0.5f, wg.GetVisualGrowthScale(SpriteSet.LayerType.Arms), effects, 0f);
 
         DrawLayers(set.TopLayers);
     }
