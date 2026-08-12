@@ -50,7 +50,7 @@ public class Straining : ModBuff
         if (!player.TryGetModPlayer(out StrainingPlayer straining) || straining.Stacks <= 0)
             return;
 
-        float lifeFactor = MathF.Max(0.05f, 1f - 0.15f * straining.Stacks);
+        float lifeFactor = 1f + 0.15f * straining.Stacks;
         float defenseFactor = MathF.Max(0f, 1f - 0.20f * straining.Stacks);
 
         player.statLifeMax2 = Math.Max(1, (int)MathF.Floor(player.statLifeMax2 * lifeFactor));
@@ -65,6 +65,7 @@ public class StrainingPlayer : ModPlayer
     public const float FedMassPerStack = 20f;
     public const int BloatedTimePerStack = 60 * 25;
     public const int SugarSpiritsPerStack = 3;
+    public const float SizePerStack = 0.05f;
 
     float _fedMassPressure;
     int _bloatedTimePressure;
@@ -72,6 +73,7 @@ public class StrainingPlayer : ModPlayer
     bool _exploded;
 
     public int Stacks { get; private set; }
+    public float SizeFactor => 1f + SizePerStack * Stacks;
 
     public void AddFedMass(float mass, StrainingSource source)
     {
@@ -134,6 +136,42 @@ public class StrainingPlayer : ModPlayer
 
         if (Stacks > 0 && !Player.HasBuff(ModContent.BuffType<Straining>()))
             Player.AddBuff(ModContent.BuffType<Straining>(), 2);
+    }
+
+    public override void TransformDrawData(ref PlayerDrawSet drawInfo)
+    {
+        if (Stacks <= 0)
+            return;
+
+        float scaleFactor = SizeFactor;
+        Vector2 center = drawInfo.Center;
+
+        for (int i = 0; i < drawInfo.DrawDataCache.Count; i++)
+        {
+            DrawData data = drawInfo.DrawDataCache[i];
+
+            if (data.useDestinationRectangle)
+            {
+                Rectangle rect = data.destinationRectangle;
+                Vector2 rectCenter = rect.Center.ToVector2();
+                Vector2 scaledCenter = center + (rectCenter - center) * scaleFactor;
+                int width = Math.Max(1, (int)MathF.Round(rect.Width * scaleFactor));
+                int height = Math.Max(1, (int)MathF.Round(rect.Height * scaleFactor));
+                data.destinationRectangle = new Rectangle(
+                    (int)MathF.Round(scaledCenter.X - width * 0.5f),
+                    (int)MathF.Round(scaledCenter.Y - height * 0.5f),
+                    width,
+                    height
+                );
+            }
+            else
+            {
+                data.position = center + (data.position - center) * scaleFactor;
+                data.scale *= scaleFactor;
+            }
+
+            drawInfo.DrawDataCache[i] = data;
+        }
     }
 
     void AddStack(StrainingSource source)
