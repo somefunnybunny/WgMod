@@ -45,7 +45,7 @@ public abstract class BloatedTierBuff : ModBuff
             7 => "BUUUUURRRP... HURRRP... seven... stages...? I can't... *urp*... stop...",
             8 => "HUUUUUURRRRRP... BUUURP... eight... *BURRRP*... too much... can't...",
             9 => "BUUUUUUUURRRRRP... HUUUUURRRP... UUUURP... B-BUUURRRP... HHHHURRRP...",
-            _ => "I'm beyond even Blob now... impossibly huge, completely stuck, and still swelling around every breath I take...",
+            _ => "BUUUUUUUUUURRRRRP... H-HUUUUURRRP... m-mega... *BUURRRP*... Blob... can't... stop swelling... can't stop... *HUUUURRRP*...",
         };
     }
 }
