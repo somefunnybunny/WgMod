@@ -1,7 +1,9 @@
+using System;
 using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
+using WgMod.Common.Configs;
 using WgMod.Content.NPCs.UndergroundDesert;
 
 namespace WgMod.Common.Players;
@@ -14,6 +16,7 @@ public class MegaBlobPlayer : ModPlayer
 
     int _megaBlobTime;
     int _foodCheckTimer;
+    bool _megaHitboxScaled;
 
     public override bool CanUseItem(Item item)
     {
@@ -22,6 +25,8 @@ public class MegaBlobPlayer : ModPlayer
 
     public override void PostUpdate()
     {
+        UpdateMegaBlobHitbox();
+
         if (!IsMegaBlob() || Player.dead)
         {
             _megaBlobTime = 0;
@@ -51,8 +56,6 @@ public class MegaBlobPlayer : ModPlayer
             if (npc.type != foodType || Vector2.DistanceSquared(npc.Center, Player.Center) > rangeSq)
                 continue;
 
-            // An existing Food satisfies the safeguard, but make sure it is actually pursuing
-            // this trapped player instead of somebody else nearby.
             if (npc.target != Player.whoAmI)
             {
                 npc.target = Player.whoAmI;
@@ -74,6 +77,74 @@ public class MegaBlobPlayer : ModPlayer
             foodType,
             Target: Player.whoAmI
         );
+    }
+
+    public override void ModifyScreenPosition()
+    {
+        if (Player.dead || !Player.TryGetModPlayer(out WgPlayer wg))
+            return;
+
+        int stage = wg.Weight.GetStage();
+        if (stage < WeightStage.Blob)
+            return;
+
+        float visualScale = stage >= WeightStage.MegaBlob
+            ? 2f
+            : float.Lerp(1f, 2f, Math.Clamp(wg.Weight.GetStageFactor(), 0f, 1f));
+
+        // Before Mega Blob, the sprite is already growing but the physical body is not yet taller.
+        // Supply only the camera shift that the current hitbox center does not already provide.
+        float physicalScale = _megaHitboxScaled
+            ? Player.height / (float)Player.defaultHeight
+            : 1f;
+        float missingScale = MathF.Max(0f, visualScale - physicalScale);
+        Main.screenPosition.Y -= Player.defaultHeight * 0.5f * missingScale * Player.gravDir;
+    }
+
+    void UpdateMegaBlobHitbox()
+    {
+        bool shouldScale = IsMegaBlob()
+            && !Player.dead
+            && !WgServerConfig.Instance.DisableFatHitbox
+            && !Player.mount.Active
+            && !Player.isLockedToATile;
+
+        if (shouldScale)
+        {
+            int targetWidth = WeightValues.GetHitboxWidthInTiles(WeightStage.MegaBlob) * 16 - 12;
+            int targetHeight = Player.defaultHeight * 2;
+            if (ResizeHitbox(targetWidth, targetHeight))
+                _megaHitboxScaled = true;
+        }
+        else if (_megaHitboxScaled)
+        {
+            int stage = Player.TryGetModPlayer(out WgPlayer wg) ? wg.Weight.GetStage() : WeightStage.Regular;
+            int targetWidth = Player.defaultWidth;
+            if (!WgServerConfig.Instance.DisableFatHitbox && !Player.mount.Active && !Player.isLockedToATile)
+                targetWidth = WeightValues.GetHitboxWidthInTiles(Math.Min(stage, WeightStage.MegaBlob)) * 16 - 12;
+
+            ResizeHitbox(targetWidth, Player.defaultHeight, true);
+            _megaHitboxScaled = false;
+        }
+    }
+
+    bool ResizeHitbox(int targetWidth, int targetHeight, bool forceShrink = false)
+    {
+        if (Player.width == targetWidth && Player.height == targetHeight)
+            return true;
+
+        float centerX = Player.position.X + Player.width * 0.5f;
+        float bottomY = Player.position.Y + Player.height;
+        Vector2 targetPosition = new(centerX - targetWidth * 0.5f, bottomY - targetHeight);
+
+        bool shrinking = targetWidth <= Player.width && targetHeight <= Player.height;
+        if (!forceShrink && !shrinking && Collision.SolidCollision(targetPosition, targetWidth, targetHeight))
+            return false;
+
+        Player.position = targetPosition;
+        Player.width = targetWidth;
+        Player.height = targetHeight;
+        return true;
     }
 
     bool IsMegaBlob()
