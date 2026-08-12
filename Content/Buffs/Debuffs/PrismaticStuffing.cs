@@ -40,7 +40,7 @@ public class PrismaticStuffing : ModBuff
 
             // At Blob, the attempted stuffing still strains the player even though weight is clamped.
             if (player.TryGetModPlayer(out StrainingPlayer straining))
-                straining.AddFedMass(FatPerCycle);
+                straining.AddFedMass(FatPerCycle, StrainingSource.PrismaticStuffing);
 
             SoundEngine.PlaySound(WgSounds.Gulp, player.Center);
         }
