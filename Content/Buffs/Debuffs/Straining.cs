@@ -5,6 +5,7 @@ using Terraria.Audio;
 using Terraria.DataStructures;
 using Terraria.ID;
 using Terraria.ModLoader;
+using WgMod.Common.Configs;
 using WgMod.Common.Players;
 
 namespace WgMod.Content.Buffs.Debuffs;
@@ -72,8 +73,6 @@ public class StrainingPlayer : ModPlayer
     int _sugarSpiritPressure;
     bool _exploded;
     bool _hitboxScaled;
-    int _baseHitboxWidth;
-    int _baseHitboxHeight;
 
     public int Stacks { get; private set; }
     public float SizeFactor => 1f + SizePerStack * Stacks;
@@ -148,24 +147,32 @@ public class StrainingPlayer : ModPlayer
 
     void UpdateScaledHitbox()
     {
+        GetUnderlyingHitbox(out int baseWidth, out int baseHeight);
+
         if (Stacks > 0 && !Player.mount.Active && !Player.isLockedToATile)
         {
-            if (!_hitboxScaled)
-            {
-                _baseHitboxWidth = Player.width;
-                _baseHitboxHeight = Player.height;
-                _hitboxScaled = true;
-            }
-
-            int targetWidth = Math.Max(1, (int)MathF.Round(_baseHitboxWidth * SizeFactor));
-            int targetHeight = Math.Max(1, (int)MathF.Round(_baseHitboxHeight * SizeFactor));
+            _hitboxScaled = true;
+            int targetWidth = Math.Max(1, (int)MathF.Round(baseWidth * SizeFactor));
+            int targetHeight = Math.Max(1, (int)MathF.Round(baseHeight * SizeFactor));
             ResizeHitbox(targetWidth, targetHeight);
         }
         else if (_hitboxScaled)
         {
-            ResizeHitbox(_baseHitboxWidth, _baseHitboxHeight, true);
+            ResizeHitbox(baseWidth, baseHeight, true);
             _hitboxScaled = false;
         }
+    }
+
+    void GetUnderlyingHitbox(out int width, out int height)
+    {
+        width = Player.defaultWidth;
+        height = Player.defaultHeight;
+
+        if (WgServerConfig.Instance.DisableFatHitbox || Player.mount.Active || Player.isLockedToATile)
+            return;
+
+        if (Player.TryGetModPlayer(out WgPlayer wg))
+            width = WeightValues.GetHitboxWidthInTiles(wg.Weight.GetStage()) * 16 - 12;
     }
 
     void ResizeHitbox(int targetWidth, int targetHeight, bool forceShrink = false)
