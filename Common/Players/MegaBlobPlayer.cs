@@ -4,6 +4,7 @@ using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
 using WgMod.Common.Configs;
+using WgMod.Content.Buffs.Debuffs;
 using WgMod.Content.NPCs.UndergroundDesert;
 
 namespace WgMod.Common.Players;
@@ -92,8 +93,11 @@ public class MegaBlobPlayer : ModPlayer
             ? 2f
             : float.Lerp(1f, 2f, Math.Clamp(wg.Weight.GetStageFactor(), 0f, 1f));
 
-        // Before Mega Blob, the sprite is already growing but the physical body is not yet taller.
-        // Supply only the camera shift that the current hitbox center does not already provide.
+        if (Player.TryGetModPlayer(out StrainingPlayer straining) && straining.Stacks > 0)
+            visualScale *= straining.SizeFactor;
+
+        // Before the physical hitbox has caught up with visual growth, supply exactly the
+        // missing vertical camera shift. Once the taller hitbox exists, its center takes over.
         float physicalScale = _megaHitboxScaled
             ? Player.height / (float)Player.defaultHeight
             : 1f;
@@ -111,8 +115,13 @@ public class MegaBlobPlayer : ModPlayer
 
         if (shouldScale)
         {
-            int targetWidth = WeightValues.GetHitboxWidthInTiles(WeightStage.MegaBlob) * 16 - 12;
-            int targetHeight = Player.defaultHeight * 2;
+            float strainScale = 1f;
+            if (Player.TryGetModPlayer(out StrainingPlayer straining) && straining.Stacks > 0)
+                strainScale = straining.SizeFactor;
+
+            int baseWidth = WeightValues.GetHitboxWidthInTiles(WeightStage.MegaBlob) * 16 - 12;
+            int targetWidth = Math.Max(1, (int)MathF.Round(baseWidth * strainScale));
+            int targetHeight = Math.Max(1, (int)MathF.Round(Player.defaultHeight * 2f * strainScale));
             if (ResizeHitbox(targetWidth, targetHeight))
                 _megaHitboxScaled = true;
         }
