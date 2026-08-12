@@ -214,8 +214,6 @@ public class FeedingManEater : ModNPC
                     NPC.Center = nextCenter;
                 else
                 {
-                    // If the direct path clips terrain, stop at the nearest safe point rather than
-                    // dragging the victim through blocks. Feeding begins from here.
                     _feedingPosition = NPC.Center;
                     _carrying = false;
                     Say(player, "The vine can't carry me any farther, so it tightens around me here instead...");
@@ -326,7 +324,7 @@ public class FeedingManEater : ModNPC
         if (requireMegaBlobClearance)
         {
             width = WeightValues.GetHitboxWidthInTiles(WeightStage.MegaBlob) * 16 - 12;
-            height = player.defaultHeight * 2;
+            height = Player.defaultHeight * 2;
         }
         else
         {
@@ -341,10 +339,9 @@ public class FeedingManEater : ModNPC
     float MeasureClearance(Vector2 center, Player player)
     {
         int baseWidth = WeightValues.GetHitboxWidthInTiles(WeightStage.MegaBlob) * 16 - 12;
-        int baseHeight = player.defaultHeight * 2;
+        int baseHeight = Player.defaultHeight * 2;
         float clearance = 0f;
 
-        // Reward candidates that still have room after the minimum Mega Blob rectangle fits.
         for (int padding = 16; padding <= 96; padding += 16)
         {
             int width = baseWidth + padding * 2;
