@@ -48,8 +48,17 @@ public class MegaBlobPlayer : ModPlayer
         float rangeSq = NearbyFoodRange * NearbyFoodRange;
         foreach (NPC npc in Main.ActiveNPCs)
         {
-            if (npc.type == foodType && Vector2.DistanceSquared(npc.Center, Player.Center) <= rangeSq)
-                return;
+            if (npc.type != foodType || Vector2.DistanceSquared(npc.Center, Player.Center) > rangeSq)
+                continue;
+
+            // An existing Food satisfies the safeguard, but make sure it is actually pursuing
+            // this trapped player instead of somebody else nearby.
+            if (npc.target != Player.whoAmI)
+            {
+                npc.target = Player.whoAmI;
+                npc.netUpdate = true;
+            }
+            return;
         }
 
         float side = Main.rand.NextBool() ? 1f : -1f;
