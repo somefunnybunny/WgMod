@@ -34,7 +34,7 @@ public class WgHeadDrawLayer : PlayerDrawLayer
         if (!player.TryGetModPlayer(out WgPlayer wg))
             return;
         Vector2 position = new Vector2((int)(drawInfo.Position.X - Main.screenPosition.X - player.bodyFrame.Width / 2 + player.width / 2), (int)(drawInfo.Position.Y - Main.screenPosition.Y + player.height - player.bodyFrame.Height + 4f)) + player.headPosition + drawInfo.headVect;
-        position.Y += wg.GetVisualGrowthLift(SpriteSet.LayerType.Fixed);
+        position.Y += wg.GetHeadGrowthLift();
         float growthScale = wg.GetVisualGrowthScale(SpriteSet.LayerType.Fixed);
         if (wg._headOverride != null)
         {
