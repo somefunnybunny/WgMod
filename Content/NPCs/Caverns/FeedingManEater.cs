@@ -147,6 +147,24 @@ public class FeedingManEater : ModNPC
             BeginGrab(player);
     }
 
+    public override void OnKill()
+    {
+        if (_grabbedPlayer < 0 || _grabbedPlayer >= Main.maxPlayers)
+            return;
+
+        Player player = Main.player[_grabbedPlayer];
+        if (!player.active || player.dead)
+            return;
+
+        int stage = player.TryGetModPlayer(out WgPlayer wg)
+            ? wg.Weight.GetStage()
+            : WeightStage.Regular;
+
+        SayReleaseMessage(player, stage, false);
+        Cue(player, "*escaped!*", Color.YellowGreen);
+        _grabbedPlayer = -1;
+    }
+
     void BeginGrab(Player player)
     {
         _grabbedPlayer = player.whoAmI;
@@ -174,17 +192,33 @@ public class FeedingManEater : ModNPC
         }
 
         Player player = Main.player[_grabbedPlayer];
-        if (!CanGrab(player))
+        if (!player.active || player.dead)
         {
             Release();
             return;
         }
 
-        if (player.TryGetModPlayer(out WgPlayer wg) && wg.Weight.GetStage() >= WeightStage.MegaBlob)
+        WgPlayer wg = null;
+        int stage = WeightStage.Regular;
+        if (player.TryGetModPlayer(out WgPlayer foundWg))
         {
-            Say(player, "It finally lets go. I barely even noticed it stop feeding me until the mouthfuls were gone...");
-            Cue(player, "*released*", Color.YellowGreen);
+            wg = foundWg;
+            stage = wg.Weight.GetStage();
+        }
+
+        // Mega Blob is the plant's natural endpoint. Check it before CanGrab(), which
+        // intentionally rejects Mega Blob players and would otherwise skip this release.
+        if (stage >= WeightStage.MegaBlob)
+        {
+            SayReleaseMessage(player, stage, true);
+            Cue(player, "*finally released*", Color.YellowGreen);
             _releasedPlayer = player.whoAmI;
+            Release();
+            return;
+        }
+
+        if (!CanGrab(player))
+        {
             Release();
             return;
         }
@@ -232,7 +266,6 @@ public class FeedingManEater : ModNPC
         player.Center = NPC.Center;
         player.velocity = Vector2.Zero;
 
-        int stage = wg?.Weight.GetStage() ?? WeightStage.Regular;
         if (stage != _lastNarrativeStage)
         {
             _lastNarrativeStage = stage;
@@ -312,6 +345,34 @@ public class FeedingManEater : ModNPC
                 1 => "Mmph... *gulp*... what was I worried about again? There's another bite coming.",
                 2 => "I can feel how absurdly far my body sticks out in front and behind me... but the next mouthful has my attention right now.",
                 _ => "More... *gulp*... I'll think about how helpless I've gotten after I finish this one. And maybe the next one.",
+            };
+        }
+
+        Say(player, text);
+    }
+
+    void SayReleaseMessage(Player player, int stage, bool naturalMegaBlobRelease)
+    {
+        string text;
+        if (naturalMegaBlobRelease || stage >= WeightStage.MegaBlob)
+        {
+            text = "It finally lets me go... wait, that's it? I let it feed me all the way into a Mega Blob, and now it decides I'm finished?";
+        }
+        else
+        {
+            text = stage switch
+            {
+                WeightStage.Regular => "I'm free. Good. I got away before that thing could start fattening me up.",
+                WeightStage.Chubby => "I'm free... finally. A little softer is a lot better than finding out how far that plant wanted to take this.",
+                WeightStage.Overweight => "I got away. I'm heavier than I was, but at least I stopped it before this got completely out of hand.",
+                WeightStage.Fat => "I'm out. I'm actually fat because of that thing, but I'm still relieved I managed to stop it here.",
+                WeightStage.Obese => "It's gone... good. I think. Why does part of me already miss having the next mouthful pushed toward me?",
+                WeightStage.MorbidlyObese => "I'm free, but... that's really the end of the feeding? I should probably be happier about that.",
+                WeightStage.BarelyMobile => "It stopped. I can barely move after all that, and somehow I'm more disappointed about losing the food than relieved about escaping.",
+                WeightStage.Immobile => "No more food...? I know getting free should matter more than that, but right now I'm mostly noticing the empty space in front of my mouth.",
+                WeightStage.Encumbered => "It actually stopped feeding me. With this much of me spread out in front and behind, you'd think I'd be relieved... but I wanted another bite.",
+                WeightStage.Blob => "It's over...? I'm a huge helpless blob because I kept eating, and the part bothering me most is that the mouthfuls stopped.",
+                _ => "I'm free... and I should probably put some distance between me and any more of those plants.",
             };
         }
 
@@ -448,7 +509,6 @@ public class FeedingManEater : ModNPC
         writer.Write(_carrying);
         writer.Write(_feedingPosition.X);
         writer.Write(_feedingPosition.Y);
-        writer.Write(_lastNarrativeStage);
     }
 
     public override void ReceiveExtraAI(BinaryReader reader)
@@ -457,6 +517,5 @@ public class FeedingManEater : ModNPC
         _releasedPlayer = reader.ReadInt32();
         _carrying = reader.ReadBoolean();
         _feedingPosition = new Vector2(reader.ReadSingle(), reader.ReadSingle());
-        _lastNarrativeStage = reader.ReadInt32();
     }
 }
