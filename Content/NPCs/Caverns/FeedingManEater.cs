@@ -177,8 +177,8 @@ public class FeedingManEater : ModNPC
         NPC.netUpdate = true;
 
         Say(player, _carrying
-            ? "The Man Eater coils around me and starts hauling me away... wait, it's looking for somewhere to keep me?"
-            : "The Man Eater coils around me and locks me in place... wait, why is it trying to feed me?");
+            ? "The Man Eater coils around me and starts hauling me away... no. Wherever it's taking me, I'm not cooperating."
+            : "The Man Eater coils around me and locks me in place... no. I'm not letting a plant feed me.");
         Cue(player, "*caught!*", Color.YellowGreen);
         SoundEngine.PlaySound(SoundID.Item7, player.Center);
     }
@@ -206,8 +206,6 @@ public class FeedingManEater : ModNPC
             stage = wg.Weight.GetStage();
         }
 
-        // Mega Blob is the plant's natural endpoint. Check it before CanGrab(), which
-        // intentionally rejects Mega Blob players and would otherwise skip this release.
         if (stage >= WeightStage.MegaBlob)
         {
             SayReleaseMessage(player, stage, true);
@@ -233,7 +231,7 @@ public class FeedingManEater : ModNPC
                 NPC.Center = _feedingPosition;
                 NPC.velocity = Vector2.Zero;
                 _carrying = false;
-                Say(player, "It found an open spot and holds me there... there's way too much room around me for comfort.");
+                Say(player, "It settles me into the open and keeps shifting me around just enough to leave my changing shape in plain view... that's disturbingly deliberate.");
                 Cue(player, "*held in place*", Color.YellowGreen);
                 NPC.netUpdate = true;
             }
@@ -253,7 +251,7 @@ public class FeedingManEater : ModNPC
                 {
                     _feedingPosition = NPC.Center;
                     _carrying = false;
-                    Say(player, "The vine can't carry me any farther, so it tightens around me here instead...");
+                    Say(player, "The vine can't carry me any farther, so it tightens around me here instead... and angles me where I can still see what it's doing.");
                     NPC.netUpdate = true;
                 }
             }
@@ -281,9 +279,6 @@ public class FeedingManEater : ModNPC
             if (player.TryGetModPlayer(out ForceFedPlayer forceFed))
                 forceFed.ApplyCustomForceFed(FeedDuration, ForceFed.FatPerCycle);
 
-            // Once the victim has grown past Fat, the plant's constant feeding also starts
-            // producing a Honey-like background gain directly in the stomach. This is separate
-            // from the discrete Force Fed mouthfuls and ends immediately when the grab ends.
             if (stage >= WeightStage.Obese && wg != null)
                 wg.AddStomach(PassiveFatteningPerFeed, false);
 
@@ -303,15 +298,15 @@ public class FeedingManEater : ModNPC
     {
         string text = stage switch
         {
-            WeightStage.Chubby => "No. Absolutely not. I'm not letting a plant stuff me just because it caught me...",
-            WeightStage.Overweight => "It's already making me noticeably bigger. I keep fighting every mouthful, but it just forces the next one in.",
-            WeightStage.Fat => "I'm actually fat now... and I'm still trying to turn my head away between every bite it pushes at me.",
-            WeightStage.Obese => "Something changed. Even between mouthfuls I can feel my body quietly adding more softness on its own...",
-            WeightStage.MorbidlyObese => "I'm getting enormous. I'm still resisting, but the feeding is starting to feel disturbingly easy to fall into.",
-            WeightStage.BarelyMobile => "I'm so heavy the vine barely has to restrain me anymore... and I'm spending more time swallowing than struggling.",
-            WeightStage.Immobile => "Mmph... another one. I know I should be worried, but right now I'm mostly waiting for it to bring the next mouthful.",
-            WeightStage.Encumbered => "I can barely see past what I'm carrying in front of me, and I can feel just as much spreading out behind... but I keep eating anyway.",
-            WeightStage.Blob => "There is so much of me sticking out in every direction now... *gulp*... and somehow my attention is still on the food.",
+            WeightStage.Chubby => "No. Absolutely not. I'm not letting some vine stuff me just because it caught me.",
+            WeightStage.Overweight => "It's already changing me... I can actually see myself getting wider every time it feeds me. That needs to stop.",
+            WeightStage.Fat => "I'm actually fat now. And why does it keep shifting me around like it wants me to get a better look at myself?",
+            WeightStage.Obese => "It moved me again... and now I can't stop noticing how much softer and broader I've gotten. That's not what I should be focusing on.",
+            WeightStage.MorbidlyObese => "I'm enormous... and it keeps holding me where I can see every new inch settle onto me. I should be fighting harder than this.",
+            WeightStage.BarelyMobile => "I'm getting so heavy that struggling barely moves me anymore... but I keep catching myself watching what each mouthful does instead.",
+            WeightStage.Immobile => "Wait... when did I stop being able to move normally? I was too busy watching myself spread out to even notice.",
+            WeightStage.Encumbered => "I can't really move at all now... but look at how far I'm sticking out in front and behind. It just keeps adding more.",
+            WeightStage.Blob => "I'm a huge helpless blob now... and I'm still watching myself get bigger like that's somehow the important part.",
             _ => "I need to get out of this before it starts making me bigger.",
         };
         Say(player, text);
@@ -324,27 +319,27 @@ public class FeedingManEater : ModNPC
         {
             text = (step % 3) switch
             {
-                1 => "I keep trying to twist away from it, but the vine just holds me still and pushes another mouthful in.",
-                2 => "I'm not cooperating with this. The moment I get an opening, I'm getting away from this thing.",
-                _ => "Another forced gulp... no. I'm still fighting this. It hasn't won yet.",
+                1 => "I keep twisting away, but the vine just pulls me back into place and forces another mouthful in.",
+                2 => "No. I'm not cooperating with this. I don't care what it's trying to do to me, I'm getting out.",
+                _ => "Another forced gulp... and another little change. I can see it happening, but that doesn't mean I'm going to let it continue.",
             };
         }
         else if (stage < WeightStage.Immobile)
         {
             text = (step % 3) switch
             {
-                1 => "The constant feeding is getting harder to separate from the slow fattening underneath it. I'm growing even between bites now.",
-                2 => "I'm still trying to resist, but every mouthful feels a little more automatic than the last.",
-                _ => "I should be thinking about escaping. Instead I caught myself swallowing before it even had to force me.",
+                1 => "It keeps nudging me into just the right position to see myself. Every time I look, there's noticeably more of me.",
+                2 => "I know I should be planning an escape, but I keep checking how much wider I've gotten instead.",
+                _ => "Another mouthful, another shift... I hate that I'm starting to wait for the part where I get to see what changed.",
             };
         }
         else
         {
             text = (step % 3) switch
             {
-                1 => "Mmph... *gulp*... what was I worried about again? There's another bite coming.",
-                2 => "I can feel how absurdly far my body sticks out in front and behind me... but the next mouthful has my attention right now.",
-                _ => "More... *gulp*... I'll think about how helpless I've gotten after I finish this one. And maybe the next one.",
+                1 => "Mmph... *gulp*... hold on, move me a little. I want to see how much that one added.",
+                2 => "I can barely tell where normal movement stopped being possible. I was too busy watching myself keep spreading.",
+                _ => "More... *gulp*... I should probably care that I'm completely helpless now, but I really want to see what the next mouthful does.",
             };
         }
 
@@ -356,22 +351,22 @@ public class FeedingManEater : ModNPC
         string text;
         if (naturalMegaBlobRelease || stage >= WeightStage.MegaBlob)
         {
-            text = "It finally lets me go... wait, that's it? I let it feed me all the way into a Mega Blob, and now it decides I'm finished?";
+            text = "It finally lets me go... wait, that's it? I let it feed me all the way into a Mega Blob while I was busy watching myself grow, and now it decides I'm finished?";
         }
         else
         {
             text = stage switch
             {
-                WeightStage.Regular => "I'm free. Good. I got away before that thing could start fattening me up.",
+                WeightStage.Regular => "I'm free. Good. I got away before that thing could start changing me.",
                 WeightStage.Chubby => "I'm free... finally. A little softer is a lot better than finding out how far that plant wanted to take this.",
-                WeightStage.Overweight => "I got away. I'm heavier than I was, but at least I stopped it before this got completely out of hand.",
-                WeightStage.Fat => "I'm out. I'm actually fat because of that thing, but I'm still relieved I managed to stop it here.",
-                WeightStage.Obese => "It's gone... good. I think. Why does part of me already miss having the next mouthful pushed toward me?",
-                WeightStage.MorbidlyObese => "I'm free, but... that's really the end of the feeding? I should probably be happier about that.",
-                WeightStage.BarelyMobile => "It stopped. I can barely move after all that, and somehow I'm more disappointed about losing the food than relieved about escaping.",
-                WeightStage.Immobile => "No more food...? I know getting free should matter more than that, but right now I'm mostly noticing the empty space in front of my mouth.",
-                WeightStage.Encumbered => "It actually stopped feeding me. With this much of me spread out in front and behind, you'd think I'd be relieved... but I wanted another bite.",
-                WeightStage.Blob => "It's over...? I'm a huge helpless blob because I kept eating, and the part bothering me most is that the mouthfuls stopped.",
+                WeightStage.Overweight => "I got away. I'm definitely heavier, but at least I stopped it before staring at the changes got distracting.",
+                WeightStage.Fat => "I'm out. I'm actually fat because of that thing... and I hate that part of me wanted one more look before it stopped.",
+                WeightStage.Obese => "It's gone... good. I think. Why am I still looking myself over like I'm expecting another change?",
+                WeightStage.MorbidlyObese => "I'm free, but... that's really it? I should be relieved, not disappointed that I don't get to watch myself grow any more.",
+                WeightStage.BarelyMobile => "It stopped. I can barely move after all that, and somehow I'm more disappointed about losing the next change than relieved about escaping.",
+                WeightStage.Immobile => "No more...? I can't even move normally anymore, and somehow the first thing I notice is that there's nothing new to watch.",
+                WeightStage.Encumbered => "It actually stopped. I'm completely stuck with all this mass in front and behind me... and I still wanted to see what one more mouthful would do.",
+                WeightStage.Blob => "It's over...? I'm a huge helpless blob, and the part bothering me most is that I don't get to watch myself get any bigger.",
                 _ => "I'm free... and I should probably put some distance between me and any more of those plants.",
             };
         }
