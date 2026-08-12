@@ -24,6 +24,16 @@ public class MegaBlobPlayer : ModPlayer
         return !IsMegaBlob();
     }
 
+    public override void PreUpdateMovement()
+    {
+        if (!IsMegaBlob() || Player.dead)
+            return;
+
+        Player.controlJump = false;
+        Player.releaseJump = true;
+        Player.jump = 0;
+    }
+
     public override void PostUpdate()
     {
         UpdateMegaBlobHitbox();
@@ -100,9 +110,6 @@ public class MegaBlobPlayer : ModPlayer
             : 1f;
         float missingScale = MathF.Max(0f, visualScale - physicalScale);
         Main.screenPosition.Y -= Player.defaultHeight * 0.5f * missingScale * Player.gravDir;
-
-        // The enlarged sprites are deliberately lifted above their old Blob anchors. Follow part
-        // of that lift so the camera focuses on the actual body mass instead of the old foot line.
         Main.screenPosition.Y += wg.GetVisualGrowthLift(SpriteSet.LayerType.Fixed) * 0.5f;
     }
 
