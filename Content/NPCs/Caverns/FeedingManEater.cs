@@ -15,7 +15,8 @@ public class FeedingManEater : ModNPC
 {
     const int FeedRefreshInterval = 15;
     const int FeedDuration = 35;
-    const int NarrativeInterval = 60 * 5;
+    const int NarrativeInterval = 60 * 9;
+    const float PassiveFatteningPerFeed = 0.35f;
     const int OpenSpaceSearchRadiusTiles = 22;
     const float CarrySpeed = 9f;
     const float CarryArrivalDistance = 10f;
@@ -25,6 +26,7 @@ public class FeedingManEater : ModNPC
     int _feedTimer;
     int _narrativeTimer;
     int _narrativeStep;
+    int _lastNarrativeStage = -1;
     bool _carrying;
     Vector2 _feedingPosition;
 
@@ -151,6 +153,7 @@ public class FeedingManEater : ModNPC
         _feedTimer = 0;
         _narrativeTimer = 0;
         _narrativeStep = 0;
+        _lastNarrativeStage = -1;
         _feedingPosition = FindOpenFeedingPosition(player);
         _carrying = Vector2.DistanceSquared(NPC.Center, _feedingPosition) > CarryArrivalDistance * CarryArrivalDistance;
         NPC.netUpdate = true;
@@ -179,7 +182,7 @@ public class FeedingManEater : ModNPC
 
         if (player.TryGetModPlayer(out WgPlayer wg) && wg.Weight.GetStage() >= WeightStage.MegaBlob)
         {
-            Say(player, "It finally lets go. I guess even this thing thinks Mega Blob is enough...");
+            Say(player, "It finally lets go. I barely even noticed it stop feeding me until the mouthfuls were gone...");
             Cue(player, "*released*", Color.YellowGreen);
             _releasedPlayer = player.whoAmI;
             Release();
@@ -229,6 +232,15 @@ public class FeedingManEater : ModNPC
         player.Center = NPC.Center;
         player.velocity = Vector2.Zero;
 
+        int stage = wg?.Weight.GetStage() ?? WeightStage.Regular;
+        if (stage != _lastNarrativeStage)
+        {
+            _lastNarrativeStage = stage;
+            SayStageMessage(player, stage);
+            _narrativeTimer = 0;
+            _narrativeStep = 0;
+        }
+
         _feedTimer++;
         if (_feedTimer >= FeedRefreshInterval)
         {
@@ -236,7 +248,13 @@ public class FeedingManEater : ModNPC
             if (player.TryGetModPlayer(out ForceFedPlayer forceFed))
                 forceFed.ApplyCustomForceFed(FeedDuration, ForceFed.FatPerCycle);
 
-            Cue(player, "*gulp*", Color.Orange);
+            // Once the victim has grown past Fat, the plant's constant feeding also starts
+            // producing a Honey-like background gain directly in the stomach. This is separate
+            // from the discrete Force Fed mouthfuls and ends immediately when the grab ends.
+            if (stage >= WeightStage.Obese && wg != null)
+                wg.AddStomach(PassiveFatteningPerFeed, false);
+
+            Cue(player, stage >= WeightStage.Immobile ? "*gulp... munch*" : "*gulp*", Color.Orange);
         }
 
         _narrativeTimer++;
@@ -244,25 +262,60 @@ public class FeedingManEater : ModNPC
         {
             _narrativeTimer = 0;
             _narrativeStep++;
-            switch (_narrativeStep)
-            {
-                case 1:
-                    Say(player, "It isn't letting up... every gulp is making me heavier while it keeps me pinned in all this open space.");
-                    break;
-                case 2:
-                    Say(player, "I can feel the weight piling on now. It picked somewhere with enough room that getting bigger isn't going to save me.");
-                    break;
-                case 3:
-                    Say(player, "Another mouthful... and another. There's still empty space around me, and the plant seems determined to fill it with me.");
-                    break;
-                case 4:
-                    Say(player, "It really planned this out... it dragged me somewhere I could keep expanding and now it just keeps feeding me.");
-                    break;
-                default:
-                    Say(player, "Still feeding me... still making me bigger. It isn't going to stop unless I make it stop.");
-                    break;
-            }
+            SayPhaseMessage(player, stage, _narrativeStep);
         }
+    }
+
+    void SayStageMessage(Player player, int stage)
+    {
+        string text = stage switch
+        {
+            WeightStage.Chubby => "No. Absolutely not. I'm not letting a plant stuff me just because it caught me...",
+            WeightStage.Overweight => "It's already making me noticeably bigger. I keep fighting every mouthful, but it just forces the next one in.",
+            WeightStage.Fat => "I'm actually fat now... and I'm still trying to turn my head away between every bite it pushes at me.",
+            WeightStage.Obese => "Something changed. Even between mouthfuls I can feel my body quietly adding more softness on its own...",
+            WeightStage.MorbidlyObese => "I'm getting enormous. I'm still resisting, but the feeding is starting to feel disturbingly easy to fall into.",
+            WeightStage.BarelyMobile => "I'm so heavy the vine barely has to restrain me anymore... and I'm spending more time swallowing than struggling.",
+            WeightStage.Immobile => "Mmph... another one. I know I should be worried, but right now I'm mostly waiting for it to bring the next mouthful.",
+            WeightStage.Encumbered => "I can barely see past what I'm carrying in front of me, and I can feel just as much spreading out behind... but I keep eating anyway.",
+            WeightStage.Blob => "There is so much of me sticking out in every direction now... *gulp*... and somehow my attention is still on the food.",
+            _ => "I need to get out of this before it starts making me bigger.",
+        };
+        Say(player, text);
+    }
+
+    void SayPhaseMessage(Player player, int stage, int step)
+    {
+        string text;
+        if (stage <= WeightStage.Fat)
+        {
+            text = step % 3 switch
+            {
+                1 => "I keep trying to twist away from it, but the vine just holds me still and pushes another mouthful in.",
+                2 => "I'm not cooperating with this. The moment I get an opening, I'm getting away from this thing.",
+                _ => "Another forced gulp... no. I'm still fighting this. It hasn't won yet.",
+            };
+        }
+        else if (stage < WeightStage.Immobile)
+        {
+            text = step % 3 switch
+            {
+                1 => "The constant feeding is getting harder to separate from the slow fattening underneath it. I'm growing even between bites now.",
+                2 => "I'm still trying to resist, but every mouthful feels a little more automatic than the last.",
+                _ => "I should be thinking about escaping. Instead I caught myself swallowing before it even had to force me.",
+            };
+        }
+        else
+        {
+            text = step % 3 switch
+            {
+                1 => "Mmph... *gulp*... what was I worried about again? There's another bite coming.",
+                2 => "I can feel how absurdly far my body sticks out in front and behind me... but the next mouthful has my attention right now.",
+                _ => "More... *gulp*... I'll think about how helpless I've gotten after I finish this one. And maybe the next one.",
+            };
+        }
+
+        Say(player, text);
     }
 
     void RestrainPlayer(Player player)
@@ -369,6 +422,7 @@ public class FeedingManEater : ModNPC
         _feedTimer = 0;
         _narrativeTimer = 0;
         _narrativeStep = 0;
+        _lastNarrativeStage = -1;
         _carrying = false;
         _feedingPosition = Vector2.Zero;
         NPC.target = 255;
@@ -394,6 +448,7 @@ public class FeedingManEater : ModNPC
         writer.Write(_carrying);
         writer.Write(_feedingPosition.X);
         writer.Write(_feedingPosition.Y);
+        writer.Write(_lastNarrativeStage);
     }
 
     public override void ReceiveExtraAI(BinaryReader reader)
@@ -402,5 +457,6 @@ public class FeedingManEater : ModNPC
         _releasedPlayer = reader.ReadInt32();
         _carrying = reader.ReadBoolean();
         _feedingPosition = new Vector2(reader.ReadSingle(), reader.ReadSingle());
+        _lastNarrativeStage = reader.ReadInt32();
     }
 }
