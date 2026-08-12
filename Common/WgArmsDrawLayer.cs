@@ -31,6 +31,7 @@ public class WgArmsDrawLayer : PlayerDrawLayer
             return;
 
         Vector2 armPosition = new Vector2((int)(drawInfo.Position.X - Main.screenPosition.X - player.bodyFrame.Width / 2 + player.width / 2), (int)(drawInfo.Position.Y - Main.screenPosition.Y + player.height - player.bodyFrame.Height + 4f)) + player.bodyPosition + new Vector2(player.bodyFrame.Width / 2, player.bodyFrame.Height / 2);
+        armPosition.Y += wg.GetVisualGrowthLift(SpriteSet.LayerType.Arms);
         Vector2 vector2 = Main.OffsetsPlayerHeadgear[player.bodyFrame.Y / player.bodyFrame.Height];
         vector2.Y -= 2f;
         armPosition += vector2 * -drawInfo.playerEffect.HasFlag(SpriteEffects.FlipVertically).ToDirectionInt();
