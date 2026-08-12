@@ -322,7 +322,7 @@ public class FeedingManEater : ModNPC
         string text;
         if (stage <= WeightStage.Fat)
         {
-            text = step % 3 switch
+            text = (step % 3) switch
             {
                 1 => "I keep trying to twist away from it, but the vine just holds me still and pushes another mouthful in.",
                 2 => "I'm not cooperating with this. The moment I get an opening, I'm getting away from this thing.",
@@ -331,7 +331,7 @@ public class FeedingManEater : ModNPC
         }
         else if (stage < WeightStage.Immobile)
         {
-            text = step % 3 switch
+            text = (step % 3) switch
             {
                 1 => "The constant feeding is getting harder to separate from the slow fattening underneath it. I'm growing even between bites now.",
                 2 => "I'm still trying to resist, but every mouthful feels a little more automatic than the last.",
@@ -340,7 +340,7 @@ public class FeedingManEater : ModNPC
         }
         else
         {
-            text = step % 3 switch
+            text = (step % 3) switch
             {
                 1 => "Mmph... *gulp*... what was I worried about again? There's another bite coming.",
                 2 => "I can feel how absurdly far my body sticks out in front and behind me... but the next mouthful has my attention right now.",
