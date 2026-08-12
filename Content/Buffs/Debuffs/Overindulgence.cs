@@ -25,7 +25,10 @@ public abstract class OverindulgenceTierBuff : ModBuff
             2 => "Overstuffed",
             3 => "Gluttonous",
             4 => "Voracious",
-            _ => "Insatiable",
+            5 => "Insatiable",
+            6 => "Bottomless",
+            7 => "Ravenous",
+            _ => "All-Consuming",
         };
 
         tip = Tier switch
@@ -34,7 +37,10 @@ public abstract class OverindulgenceTierBuff : ModBuff
             2 => "I'm getting pretty full, and my hips are starting to feel heavier... but I still want another one to find me.",
             3 => "I'm stuffed, my rear is getting huge, and I know exactly what more will do to me... but I want it anyway.",
             4 => "Give me more. I want my hips wider and my backside heavier. I don't care how helpless I get if it keeps feeding me there.",
-            _ => "More. Keep feeding me. Make my backside enormous. I don't care if it gets so huge I can't move at all. I want all of it.",
+            5 => "More. Keep feeding me. Make my backside enormous. I don't care if it gets so huge I can't move at all. I want all of it.",
+            6 => "I don't want anything else finding me now. Just keep sending food until my hips swallow up everything around me.",
+            7 => "More food. Nothing but food. I want my backside so absurdly huge that there's barely room for anything else.",
+            _ => "Let the whole world be food. Keep piling it into me until my enormous rear is all I can feel and all anything can reach.",
         };
     }
 }
@@ -64,10 +70,25 @@ public class Insatiable : OverindulgenceTierBuff
     public override int Tier => 5;
 }
 
+public class Bottomless : OverindulgenceTierBuff
+{
+    public override int Tier => 6;
+}
+
+public class Ravenous : OverindulgenceTierBuff
+{
+    public override int Tier => 7;
+}
+
+public class AllConsuming : OverindulgenceTierBuff
+{
+    public override int Tier => 8;
+}
+
 public static class OverindulgenceChain
 {
     public const int Duration = 60 * 60;
-    public const int MaxTier = 5;
+    public const int MaxTier = 8;
 
     public static void Advance(Player player)
     {
@@ -94,6 +115,20 @@ public static class OverindulgenceChain
             3 => 2f,
             4 => 3f,
             5 => 5f,
+            6 => 10f,
+            7 => 25f,
+            8 => 60f,
+            _ => 1f,
+        };
+    }
+
+    public static float GetOtherSpawnMultiplier(Player player)
+    {
+        return GetTier(player) switch
+        {
+            6 => 0.25f,
+            7 => 0.05f,
+            8 => 0.01f,
             _ => 1f,
         };
     }
@@ -122,7 +157,10 @@ public static class OverindulgenceChain
             2 => ModContent.BuffType<Overstuffed>(),
             3 => ModContent.BuffType<Gluttonous>(),
             4 => ModContent.BuffType<Voracious>(),
-            _ => ModContent.BuffType<Insatiable>(),
+            5 => ModContent.BuffType<Insatiable>(),
+            6 => ModContent.BuffType<Bottomless>(),
+            7 => ModContent.BuffType<Ravenous>(),
+            _ => ModContent.BuffType<AllConsuming>(),
         };
     }
 }
