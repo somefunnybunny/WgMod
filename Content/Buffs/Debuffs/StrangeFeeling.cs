@@ -19,7 +19,7 @@ public class StrangeFeeling : ModBuff
     public override void ModifyBuffText(ref string buffName, ref string tip, ref int rare)
     {
         buffName = "Strange Feeling";
-        tip = "That sting left a strange warmth behind... I can't tell if I should be worried or curious.";
+        tip = "That sting left a warm pressure in my stomach... and for some reason I keep wondering where all that swelling is going to end up.";
     }
 
     public override void Update(Player player, ref int buffIndex)
@@ -48,7 +48,7 @@ public class StrangeFeelingPlayer : ModPlayer
         _active = true;
         _timer = 0;
         _bloatingTimer = 0;
-        Say("That sting felt... different. Not bad, exactly. Just strangely warm.");
+        Say("That sting felt... different. My stomach feels warm. Full, almost. Huh...");
     }
 
     public override void PostUpdate()
@@ -66,19 +66,19 @@ public class StrangeFeelingPlayer : ModPlayer
         switch (_timer)
         {
             case 60 * 5:
-                Say("That warmth is spreading through me now. It's almost comfortable... which somehow makes it more suspicious.");
+                Say("Urf... that warmth is turning into pressure. I keep needing to burp, but... it actually feels kind of nice.");
                 break;
             case 60 * 10:
-                Say("I feel pressure building somewhere under my skin. I should hate this feeling... but I'm getting curious instead.");
+                Say("Hrrp... okay, I'm definitely swelling. If all this has to go somewhere... I wouldn't mind if most of it settled into my hips and backside.");
                 break;
             case 60 * 15:
-                Say("Something is definitely about to happen to me. The thought of swelling up should be terrifying... so why does part of me want to see it?");
+                Say("HUUURP... ngh... I'm getting bigger fast. My stomach is so gassy, but I can't stop thinking about how much wider and heavier my rear could get.");
                 break;
             case 60 * 19:
-                Say("It's getting stronger. I don't think I could stop whatever that bee started now... and I'm not sure I want to.");
+                Say("BUUURRRP... I don't think I can stop this anymore... and I don't think I want to. If I'm going to balloon up, then let as much of it as possible pile onto my hips and backside.");
                 break;
             case BloatingStartTime:
-                Say("There it is... I'm starting to swell. This is going to get completely out of hand, isn't it?");
+                Say("HUUUUURRRP... th-there it is... I'm swelling for real now. Keep going... *burp*... lower... wider... bigger...");
                 break;
         }
 
@@ -87,7 +87,7 @@ public class StrangeFeelingPlayer : ModPlayer
 
         if (Player.TryGetModPlayer(out WgPlayer wg) && wg.Weight.GetStage() >= WeightStage.MegaBlob)
         {
-            Say("I'm huge... way beyond where I should have stopped. And somehow that strange feeling finally seems satisfied.");
+            Say("BUUUUUUUURRRRRP... I-I'm enormous... *HUUURP*... my hips, my backside... there's so much of me now... and that strange feeling finally feels satisfied.");
             ResetSequence();
             return;
         }
