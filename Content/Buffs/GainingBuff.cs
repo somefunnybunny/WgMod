@@ -4,6 +4,7 @@ using Terraria.Audio;
 using Terraria.ID;
 using Terraria.ModLoader;
 using WgMod.Common.Players;
+using WgMod.Content.Buffs.Debuffs;
 
 namespace WgMod.Content.Buffs;
 
@@ -16,7 +17,13 @@ public class GainingBuff : WgBuffBase
         int duration = wg.BuffDuration[buffIndex];
         if (duration == 0)
             return;
-        wg.AddStomach(wg._buffTotalGain / duration);
+
+        float massPerTick = wg._buffTotalGain / duration;
+        wg.AddStomach(massPerTick);
+
+        // Generic fattening contributes to Straining at Blob using the same 20 kg threshold.
+        if (player.TryGetModPlayer(out StrainingPlayer straining))
+            straining.AddFedMass(massPerTick, StrainingSource.Generic);
     }
 
     public static bool AddBuff(WgPlayer wg, GainOptions gain)
