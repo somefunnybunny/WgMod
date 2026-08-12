@@ -102,13 +102,15 @@ public class SweetSpirit : ModNPC
                 IdleAnimation();
                 if (NPC.HasPlayerTarget)
                 {
-                    Timer--;
+                    Player player = Main.player[NPC.target];
+                    int tier = PossessionChain.GetTier(player);
+                    Timer -= GetWanderTimerRate(tier);
                     if (Timer < 0f)
                     {
-                        if (Vector2.DistanceSquared(NPC.Center, Main.player[NPC.target].Center) < 100f * 100f)
+                        if (Vector2.DistanceSquared(NPC.Center, player.Center) < 100f * 100f)
                             SetState(State.Positioning);
                         else
-                            Timer = WanderTime / 4;
+                            Timer = WanderTime / (4f * GetWanderTimerRate(tier));
                     }
                 }
                 else
@@ -119,9 +121,10 @@ public class SweetSpirit : ModNPC
                 if (NPC.HasPlayerTarget)
                 {
                     Player player = Main.player[NPC.target];
+                    int tier = PossessionChain.GetTier(player);
                     NPC.direction = -player.direction;
                     Vector2 target = GetEnterPosition(player);
-                    NPC.velocity = (target - NPC.Center) * 0.2f;
+                    NPC.velocity = (target - NPC.Center) * GetPositioningSpeed(tier);
                     if (Vector2.DistanceSquared(NPC.Center, target) < 20f * 20f)
                         SetState(State.Entering);
                 }
@@ -132,11 +135,12 @@ public class SweetSpirit : ModNPC
                 if (NPC.HasPlayerTarget)
                 {
                     Player player = Main.player[NPC.target];
+                    int tier = PossessionChain.GetTier(player);
                     NPC.direction = -player.direction;
                     NPC.velocity = GetEnterPosition(player) - NPC.Center;
 
                     NPC.frameCounter++;
-                    if (NPC.frameCounter > 5)
+                    if (NPC.frameCounter > GetEnteringFrameDelay(tier))
                     {
                         NPC.frameCounter = 0;
                         if (_frame >= FrameCount - 1)
@@ -203,6 +207,54 @@ public class SweetSpirit : ModNPC
             _frame++;
             _frame %= 4;
         }
+    }
+
+    static float GetWanderTimerRate(int tier)
+    {
+        return tier switch
+        {
+            1 => 1.15f,
+            2 => 1.35f,
+            3 => 1.6f,
+            4 => 2f,
+            5 => 2.5f,
+            6 => 3.5f,
+            7 => 5f,
+            8 => 8f,
+            _ => 1f,
+        };
+    }
+
+    static float GetPositioningSpeed(int tier)
+    {
+        return tier switch
+        {
+            1 => 0.22f,
+            2 => 0.24f,
+            3 => 0.27f,
+            4 => 0.30f,
+            5 => 0.34f,
+            6 => 0.40f,
+            7 => 0.50f,
+            8 => 0.65f,
+            _ => 0.20f,
+        };
+    }
+
+    static int GetEnteringFrameDelay(int tier)
+    {
+        return tier switch
+        {
+            1 => 5,
+            2 => 4,
+            3 => 4,
+            4 => 3,
+            5 => 3,
+            6 => 2,
+            7 => 1,
+            8 => 0,
+            _ => 5,
+        };
     }
 
     static Vector2 GetEnterPosition(Player player)
