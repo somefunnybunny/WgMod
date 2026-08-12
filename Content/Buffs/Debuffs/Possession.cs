@@ -126,7 +126,12 @@ public static class PossessionChain
     {
         return GetTier(player) switch
         {
-            6 => 0.25f,
+            1 => 0.90f,
+            2 => 0.80f,
+            3 => 0.65f,
+            4 => 0.50f,
+            5 => 0.35f,
+            6 => 0.20f,
             7 => 0.05f,
             8 => 0.01f,
             _ => 1f,
