@@ -110,6 +110,12 @@ public class BloatedPlayer : ModPlayer
             return;
 
         timeToAdd = Math.Max(timeToAdd, 1);
+
+        // Once the player is already Blobbed, every additional 25 seconds worth of Bloated
+        // applications contributes one Straining stack, even if the active Bloated timer is capped.
+        if (wg.Weight.GetStage() >= WeightStage.Blob && Player.TryGetModPlayer(out StrainingPlayer straining))
+            straining.AddBloatedTime(timeToAdd);
+
         int tier = GetActiveTier(out int buffIndex);
 
         if (tier <= 0)
