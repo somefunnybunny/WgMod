@@ -27,7 +27,16 @@ public class WgItem : GlobalItem
     {
         if (!player.TryGetModPlayer(out WgPlayer wg))
             return true;
-        if (!WgServerConfig.Instance.DisableFatBuffs && wg.Weight.GetStage() >= WeightStage.Blob)
+
+        int stage = wg.Weight.GetStage();
+        if (!WgServerConfig.Instance.DisableFatBuffs && stage >= WeightStage.MegaBlob)
+        {
+            // Mega Blob is a complete item-use lock. Unlike ordinary Blob, there are no
+            // exceptions for food, hooks, mounts, or even the developer weight items.
+            return false;
+        }
+
+        if (!WgServerConfig.Instance.DisableFatBuffs && stage >= WeightStage.Blob)
         {
             bool allow = item.useStyle == ItemUseStyleID.None; // Unrelated
             allow |= item.type == ModContent.ItemType<WeightManipulator>(); // Is dev object
