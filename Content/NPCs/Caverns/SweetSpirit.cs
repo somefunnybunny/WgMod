@@ -42,7 +42,7 @@ public class SweetSpirit : ModNPC
     {
         NPC.width = 28;
         NPC.height = 38;
-        NPC.damage = 15;
+        NPC.damage = 0;
         NPC.defense = 8;
         NPC.lifeMax = 50;
         NPC.HitSound = SoundID.NPCHit1;
@@ -64,6 +64,11 @@ public class SweetSpirit : ModNPC
     public override float SpawnChance(NPCSpawnInfo spawnInfo)
     {
         return 0.05f * PossessionChain.GetSpawnMultiplier(spawnInfo.Player);
+    }
+
+    public override bool CanHitPlayer(Player target, ref int cooldownSlot)
+    {
+        return false;
     }
 
     public override void DrawBehind(int index)
