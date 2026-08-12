@@ -152,10 +152,15 @@ public class SweetSpirit : ModNPC
                 if (NPC.HasPlayerTarget && Main.player[NPC.target].TryGetModPlayer(out WgPlayer wg))
                 {
                     Player player = Main.player[NPC.target];
+                    bool alreadyBlobbed = wg.Weight.GetStage() >= WeightStage.Blob;
                     int stage = wg.Weight.GetStage();
                     Mass mass = (Weight.FromStage(stage + 1).Mass - Weight.FromStage(stage).Mass) * 0.5f + 10f;
                     wg.CombatWeightText(wg.AddWeight(mass), false); // Add around half a stage worth of weight
                     PossessionChain.Advance(player);
+
+                    // Once already at Blob, every three successful possessions add one Straining stack.
+                    if (alreadyBlobbed && player.TryGetModPlayer(out StrainingPlayer straining))
+                        straining.AddSugarSpiritPossession();
                 }
                 NPC.life = 0;
                 break;
