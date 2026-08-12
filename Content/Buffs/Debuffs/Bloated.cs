@@ -30,7 +30,8 @@ public abstract class BloatedTierBuff : ModBuff
             6 => "Ballooned",
             7 => "Overblown",
             8 => "Hyperinflated",
-            _ => "Uncontainably Bloated",
+            9 => "Uncontainably Bloated",
+            _ => "Megabloated",
         };
 
         tip = Tier switch
@@ -43,7 +44,8 @@ public abstract class BloatedTierBuff : ModBuff
             6 => "HUUUURRRP... b-buurp... six stages... I'm ballooning faster than I can let any of this out...",
             7 => "BUUUUURRRP... HURRRP... seven... stages...? I can't... *urp*... stop...",
             8 => "HUUUUUURRRRRP... BUUURP... eight... *BURRRP*... too much... can't...",
-            _ => "BUUUUUUUURRRRRP... HUUUUURRRP... UUUURP... B-BUUURRRP... HHHHURRRP...",
+            9 => "BUUUUUUUURRRRRP... HUUUUURRRP... UUUURP... B-BUUURRRP... HHHHURRRP...",
+            _ => "I'm beyond even Blob now... impossibly huge, completely stuck, and still swelling around every breath I take...",
         };
     }
 }
@@ -94,6 +96,11 @@ public class UncontainablyBloated : BloatedTierBuff
     public override int Tier => 9;
 }
 
+public class Megabloated : BloatedTierBuff
+{
+    public override int Tier => 10;
+}
+
 public class BloatedPlayer : ModPlayer
 {
     public const int MaxTimer = 60 * 25;
@@ -111,9 +118,9 @@ public class BloatedPlayer : ModPlayer
 
         timeToAdd = Math.Max(timeToAdd, 1);
 
-        // Once the player is already Blobbed, every additional 25 seconds worth of Bloated
-        // applications contributes one Straining stack, even if the active Bloated timer is capped.
-        if (wg.Weight.GetStage() >= WeightStage.Blob && Player.TryGetModPlayer(out StrainingPlayer straining))
+        // Additional Bloating only becomes physically dangerous once the new Mega Blob ceiling
+        // has actually been reached. Blob itself is deliberately safe from Straining pressure.
+        if (wg.Weight.GetStage() >= WeightStage.MegaBlob && Player.TryGetModPlayer(out StrainingPlayer straining))
             straining.AddBloatedTime(timeToAdd);
 
         int tier = GetActiveTier(out int buffIndex);
@@ -126,7 +133,7 @@ public class BloatedPlayer : ModPlayer
         }
 
         int totalTime = Player.buffTime[buffIndex] + timeToAdd;
-        if (totalTime >= MaxTimer && tier < WeightStage.Blob)
+        if (totalTime >= MaxTimer && tier < WeightStage.MegaBlob)
         {
             int overflow = totalTime - MaxTimer;
             Player.DelBuff(buffIndex);
@@ -144,6 +151,7 @@ public class BloatedPlayer : ModPlayer
 
         if (Player.dead)
         {
+            ClearBloatedBuffs();
             ResetTracking();
             return;
         }
@@ -205,19 +213,30 @@ public class BloatedPlayer : ModPlayer
         EnforceForcedWeight(wg, tier);
     }
 
+    public override void UpdateDead()
+    {
+        ClearBloatedBuffs();
+        ResetTracking();
+    }
+
+    public override void OnRespawn()
+    {
+        // Explicitly clear every tier here as well. buffNoSave prevents world persistence, but
+        // death/respawn is a separate lifecycle and previously allowed the chain to linger.
+        ClearBloatedBuffs();
+        ResetTracking();
+    }
+
     void BeginTracking(WgPlayer wg)
     {
         _underlyingWeight = wg.Weight;
         _lastForcedWeight = wg.Weight;
-        _minimumNaturalStage = Math.Clamp(_underlyingWeight.GetStage(), WeightStage.Regular, WeightStage.Blob);
+        _minimumNaturalStage = Math.Clamp(_underlyingWeight.GetStage(), WeightStage.Regular, WeightStage.MegaBlob);
         _trackingUnderlyingWeight = true;
     }
 
     void CaptureUnderlyingWeightChange(WgPlayer wg)
     {
-        // Anything that changed the displayed weight after the previous Bloated enforcement
-        // belongs to the real underlying weight. This includes potions, enemy gain, and digestion.
-        // Bloated itself never subtracts temporary mass.
         Mass delta = wg.Weight.Mass - _lastForcedWeight.Mass;
         if (MathF.Abs(delta) > 0.0001f)
             _underlyingWeight = Weight.Clamp(_underlyingWeight + delta);
@@ -225,10 +244,7 @@ public class BloatedPlayer : ModPlayer
 
     void UpdateMinimumNaturalStage()
     {
-        int naturalStage = Math.Clamp(_underlyingWeight.GetStage(), WeightStage.Regular, WeightStage.Blob);
-
-        // The floor can rise with real weight gain, but it cannot fall while the chain is active.
-        // Explicit weight loss is still recorded and becomes visible when Bloated ends.
+        int naturalStage = Math.Clamp(_underlyingWeight.GetStage(), WeightStage.Regular, WeightStage.MegaBlob);
         _minimumNaturalStage = Math.Max(_minimumNaturalStage, naturalStage);
     }
 
@@ -241,29 +257,36 @@ public class BloatedPlayer : ModPlayer
 
     static Weight GetForcedWeight(Weight underlyingWeight, int tier, int minimumNaturalStage)
     {
-        int naturalStage = Math.Clamp(underlyingWeight.GetStage(), WeightStage.Regular, WeightStage.Blob);
+        int naturalStage = Math.Clamp(underlyingWeight.GetStage(), WeightStage.Regular, WeightStage.MegaBlob);
         int baselineStage = Math.Max(naturalStage, minimumNaturalStage);
-        int targetStage = Math.Min(baselineStage + tier, WeightStage.Blob);
+        int targetStage = Math.Min(baselineStage + tier, WeightStage.MegaBlob);
 
         if (targetStage <= naturalStage)
             return underlyingWeight;
 
-        // Preserve progress within a stage when the underlying weight is at the active floor.
-        // If explicit weight loss has pushed the hidden weight below that floor, hold at the start
-        // of the forced stage instead of allowing that loss to partially cancel Bloated.
         float stageProgress = naturalStage >= baselineStage
             ? Math.Clamp(underlyingWeight.GetStageFactor(), 0f, 1f)
             : 0f;
 
-        if (targetStage < WeightStage.Blob)
+        if (targetStage < WeightStage.MegaBlob)
         {
             float targetStart = Weight.FromStage(targetStage).Mass;
             float targetEnd = Weight.FromStage(targetStage + 1).Mass;
             return new Weight(float.Lerp(targetStart, targetEnd, stageProgress));
         }
 
-        // Blob is the final stage, so preserve progress within its clamped 10 kg range.
-        return new Weight(Weight.FromStage(WeightStage.Blob).Mass + 10f * stageProgress);
+        // Mega Blob is now the final stage. Preserve progress inside its clamped 10 kg range.
+        return new Weight(Weight.FromStage(WeightStage.MegaBlob).Mass + 10f * stageProgress);
+    }
+
+    void ClearBloatedBuffs()
+    {
+        for (int tier = WeightStage.MegaBlob; tier >= 1; tier--)
+        {
+            int index = Player.FindBuffIndex(GetBuffType(tier));
+            if (index >= 0)
+                Player.DelBuff(index);
+        }
     }
 
     void ResetTracking()
@@ -277,7 +300,7 @@ public class BloatedPlayer : ModPlayer
 
     int GetActiveTier(out int buffIndex)
     {
-        for (int tier = WeightStage.Blob; tier >= 1; tier--)
+        for (int tier = WeightStage.MegaBlob; tier >= 1; tier--)
         {
             int index = Player.FindBuffIndex(GetBuffType(tier));
             if (index >= 0)
@@ -303,7 +326,8 @@ public class BloatedPlayer : ModPlayer
             6 => ModContent.BuffType<Ballooned>(),
             7 => ModContent.BuffType<Overblown>(),
             8 => ModContent.BuffType<Hyperinflated>(),
-            _ => ModContent.BuffType<UncontainablyBloated>(),
+            9 => ModContent.BuffType<UncontainablyBloated>(),
+            _ => ModContent.BuffType<Megabloated>(),
         };
     }
 }
