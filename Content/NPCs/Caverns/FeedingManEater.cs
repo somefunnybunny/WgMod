@@ -61,11 +61,20 @@ public class FeedingManEater : ModNPC
             return;
         }
 
+        // After successfully feeding someone all the way to Mega Blob, the plant goes docile
+        // instead of immediately reacquiring that same helpless target.
+        if (_releasedPlayer >= 0)
+        {
+            NPC.target = 255;
+            NPC.velocity *= 0.85f;
+            return;
+        }
+
         if (!NPC.HasPlayerTarget)
             return;
 
         Player player = Main.player[NPC.target];
-        if (!CanGrab(player) || player.whoAmI == _releasedPlayer)
+        if (!CanGrab(player))
             return;
 
         Rectangle grabBox = NPC.Hitbox;
@@ -84,7 +93,7 @@ public class FeedingManEater : ModNPC
 
         Say(player, "The Man Eater coils around me and locks me in place... wait, why is it trying to feed me?");
         Cue(player, "*caught!*", Color.YellowGreen);
-        SoundEngine.PlaySound(SoundID.Grab, player.Center);
+        SoundEngine.PlaySound(SoundID.Item7, player.Center);
     }
 
     void UpdateGrab()
@@ -111,7 +120,6 @@ public class FeedingManEater : ModNPC
             return;
         }
 
-        // Hold the victim at the plant's mouth without applying ordinary contact damage.
         player.Center = NPC.Center;
         player.velocity = Vector2.Zero;
         player.controlLeft = false;
