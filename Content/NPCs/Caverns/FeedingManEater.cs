@@ -43,15 +43,11 @@ public class FeedingManEater : ModNPC
         if (!player.ZoneJungle || player.dead)
             return 0f;
 
-        // Keep this in the real Underground Jungle/Cavern Jungle rather than the surface biome.
-        if (!player.ZoneDirtLayerHeight && !player.ZoneRockLayerHeight)
-            return 0f;
-
         if (player.TryGetModPlayer(out WgPlayer wg) && wg.Weight.GetStage() >= WeightStage.MegaBlob)
             return 0f;
 
-        // This is intentionally common. The old 0.004 weight made it effectively invisible next
-        // to ordinary Jungle enemies; 0.18 lets it compete with the regular Man Eater population.
+        // Intentionally common across the whole Jungle, including the surface, to mirror
+        // the broad habitat of ordinary Man Eaters while remaining easy enough to encounter.
         return 0.18f;
     }
 
