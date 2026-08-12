@@ -41,24 +41,44 @@ public class EnemyDebuffSpawnControl : GlobalNPC
 
     public override void EditSpawnRate(Player player, ref int spawnRate, ref int maxSpawns)
     {
-        int takeoverTier = Math.Max(
+        int attractorTier = Math.Max(
             OverindulgenceChain.GetTier(player),
             PossessionChain.GetTier(player)
         );
 
-        switch (takeoverTier)
+        switch (attractorTier)
         {
-            case 6:
+            case 1:
                 spawnRate = Math.Max(1, spawnRate / 2);
                 maxSpawns += 5;
                 break;
-            case 7:
+            case 2:
+                spawnRate = Math.Max(1, spawnRate / 3);
+                maxSpawns += 8;
+                break;
+            case 3:
                 spawnRate = Math.Max(1, spawnRate / 4);
-                maxSpawns += 10;
+                maxSpawns += 12;
+                break;
+            case 4:
+                spawnRate = Math.Max(1, spawnRate / 6);
+                maxSpawns += 16;
+                break;
+            case 5:
+                spawnRate = Math.Max(1, spawnRate / 8);
+                maxSpawns += 20;
+                break;
+            case 6:
+                spawnRate = Math.Max(1, spawnRate / 12);
+                maxSpawns += 25;
+                break;
+            case 7:
+                spawnRate = Math.Max(1, spawnRate / 16);
+                maxSpawns += 30;
                 break;
             case >= 8:
-                spawnRate = Math.Max(1, spawnRate / 10);
-                maxSpawns += 20;
+                spawnRate = Math.Max(1, spawnRate / 24);
+                maxSpawns += 40;
                 break;
         }
     }
