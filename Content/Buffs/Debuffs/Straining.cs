@@ -51,7 +51,7 @@ public class Straining : ModBuff
             return;
 
         float lifeFactor = MathF.Max(0.05f, 1f - 0.15f * straining.Stacks);
-        float defenseFactor = MathF.Max(0f, 1f - 0.10f * straining.Stacks);
+        float defenseFactor = MathF.Max(0f, 1f - 0.20f * straining.Stacks);
 
         player.statLifeMax2 = Math.Max(1, (int)MathF.Floor(player.statLifeMax2 * lifeFactor));
         player.statDefense *= defenseFactor;
