@@ -74,7 +74,7 @@ public class WgArmsDrawLayer : PlayerDrawLayer
         Color skinColor = drawInfo.colorBodySkin;
         if (player.isDisplayDollOrInanimate)
             skinColor = new Color(154, 115, 85).MultiplyRGB(skinColor);
-        DrawData drawData = new(texture.Value, armPosition, frame, skinColor, rotation, bodyVectBig, 1f, drawInfo.playerEffect)
+        DrawData drawData = new(texture.Value, armPosition, frame, skinColor, rotation, bodyVectBig, wg.GetVisualGrowthScale(SpriteSet.LayerType.Arms), drawInfo.playerEffect)
         {
             shader = drawInfo.skinDyePacked
         };
