@@ -46,7 +46,7 @@ public class HomingFood : ModNPC
     {
         NPC.width = 22;
         NPC.height = 22;
-        NPC.damage = 10;
+        NPC.damage = 0;
         NPC.defense = 14;
         NPC.lifeMax = 30;
         NPC.HitSound = SoundID.NPCHit1;
@@ -136,6 +136,11 @@ public class HomingFood : ModNPC
         Lighting.AddLight(NPC.Center, Color.Purple.ToVector3() * 0.78f);
     }
 
+    public override bool CanHitPlayer(Player target, ref int cooldownSlot)
+    {
+        return false;
+    }
+
     public override bool PreDraw(SpriteBatch spriteBatch, Vector2 screenPos, Color drawColor)
     {
         Main.instance.LoadItem(_itemId);
@@ -149,16 +154,6 @@ public class HomingFood : ModNPC
     {
         Dust dust = Dust.NewDustDirect(NPC.position, NPC.width, NPC.height, DustID.PinkTorch, NPC.velocity.X, NPC.velocity.Y, 0, Color.White, 1f);
         dust.noGravity = true;
-    }
-
-    public override void ModifyHitPlayer(Player target, ref Player.HurtModifiers modifiers)
-    {
-        modifiers.Knockback *= 0f;
-    }
-
-    public override void OnHitPlayer(Player target, Player.HurtInfo hurtInfo)
-    {
-        FeedPlayer(target);
     }
 
     void FeedPlayer(Player player)
