@@ -49,36 +49,34 @@ public class EnemyDebuffSpawnControl : GlobalNPC
         switch (attractorTier)
         {
             case 1:
-                spawnRate = Math.Max(1, spawnRate / 2);
-                maxSpawns += 5;
+                maxSpawns += 2;
                 break;
             case 2:
+                maxSpawns += 3;
+                break;
+            case 3:
+                spawnRate = Math.Max(1, spawnRate / 2);
+                maxSpawns += 4;
+                break;
+            case 4:
+                spawnRate = Math.Max(1, spawnRate / 2);
+                maxSpawns += 6;
+                break;
+            case 5:
                 spawnRate = Math.Max(1, spawnRate / 3);
                 maxSpawns += 8;
                 break;
-            case 3:
-                spawnRate = Math.Max(1, spawnRate / 4);
-                maxSpawns += 12;
-                break;
-            case 4:
-                spawnRate = Math.Max(1, spawnRate / 6);
-                maxSpawns += 16;
-                break;
-            case 5:
-                spawnRate = Math.Max(1, spawnRate / 8);
-                maxSpawns += 20;
-                break;
             case 6:
-                spawnRate = Math.Max(1, spawnRate / 12);
-                maxSpawns += 25;
+                spawnRate = Math.Max(1, spawnRate / 4);
+                maxSpawns += 10;
                 break;
             case 7:
-                spawnRate = Math.Max(1, spawnRate / 16);
-                maxSpawns += 30;
+                spawnRate = Math.Max(1, spawnRate / 5);
+                maxSpawns += 12;
                 break;
             case >= 8:
-                spawnRate = Math.Max(1, spawnRate / 24);
-                maxSpawns += 40;
+                spawnRate = Math.Max(1, spawnRate / 6);
+                maxSpawns += 15;
                 break;
         }
     }
