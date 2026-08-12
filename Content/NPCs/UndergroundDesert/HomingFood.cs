@@ -135,10 +135,16 @@ public class HomingFood : ModNPC
             return;
 
         _fedPlayer = true;
+
+        int nextOverindulgenceTier = Math.Min(OverindulgenceChain.GetTier(player) + 1, OverindulgenceChain.MaxTier);
+        int baseForceFedTime = (int)(ForceFed.TicksPerCycle * 1.5f);
+        int tierBonusTime = 30 * nextOverindulgenceTier; // +0.5 seconds per Overindulgence tier.
+        int forceFedTime = baseForceFedTime + tierBonusTime;
+
         if (player.TryGetModPlayer(out ForceFedPlayer forceFed))
-            forceFed.AddStackingForceFed((int)(ForceFed.TicksPerCycle * 1.5f));
+            forceFed.AddStackingForceFed(forceFedTime);
         else
-            player.AddBuff(ModContent.BuffType<ForceFed>(), (int)(ForceFed.TicksPerCycle * 1.5f));
+            player.AddBuff(ModContent.BuffType<ForceFed>(), forceFedTime);
 
         player.AddBuff(BuffID.WellFed, 60 * 4);
         OverindulgenceChain.Advance(player);
