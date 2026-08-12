@@ -43,7 +43,7 @@ public class ForceFed : ModBuff
 
             // At Blob, count the amount being forced in even if the visible weight is already clamped.
             if (player.TryGetModPlayer(out StrainingPlayer straining))
-                straining.AddFedMass(fatPerCycle);
+                straining.AddFedMass(fatPerCycle, StrainingSource.ForceFed);
 
             SoundEngine.PlaySound(WgSounds.Gulp, player.Center);
         }
