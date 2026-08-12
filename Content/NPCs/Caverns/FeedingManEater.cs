@@ -52,15 +52,55 @@ public class FeedingManEater : ModNPC
 
     public override void OnSpawn(IEntitySource source)
     {
-        // Vanilla Man Eater AI expects ai[0]/ai[1] to contain the tether tile.
-        // Natural modded NPC spawning doesn't automatically apply that vanilla special-spawn rule,
-        // so initialize a sensible anchor from the NPC's spawn position when none was supplied.
-        if (NPC.ai[0] == 0f && NPC.ai[1] == 0f)
+        if (NPC.ai[0] != 0f || NPC.ai[1] != 0f)
+            return;
+
+        int startX = (int)(NPC.Center.X / 16f);
+        int startY = (int)((NPC.position.Y + NPC.height) / 16f);
+        if (TryFindAnchor(startX, startY, out int anchorX, out int anchorY))
         {
-            NPC.ai[0] = (int)(NPC.Center.X / 16f);
-            NPC.ai[1] = (int)((NPC.position.Y + NPC.height) / 16f);
-            NPC.netUpdate = true;
+            NPC.ai[0] = anchorX;
+            NPC.ai[1] = anchorY;
         }
+        else
+        {
+            NPC.ai[0] = startX;
+            NPC.ai[1] = startY;
+        }
+
+        NPC.netUpdate = true;
+    }
+
+    static bool TryFindAnchor(int startX, int startY, out int anchorX, out int anchorY)
+    {
+        for (int radius = 0; radius <= 10; radius++)
+        {
+            for (int xOffset = -radius; xOffset <= radius; xOffset++)
+            {
+                int x = startX + xOffset;
+                if (x < 1 || x >= Main.maxTilesX - 1)
+                    continue;
+
+                for (int yOffset = -4; yOffset <= 12; yOffset++)
+                {
+                    int y = startY + yOffset;
+                    if (y < 1 || y >= Main.maxTilesY - 1)
+                        continue;
+
+                    Tile tile = Main.tile[x, y];
+                    if (tile.HasUnactuatedTile && Main.tileSolid[tile.TileType])
+                    {
+                        anchorX = x;
+                        anchorY = y;
+                        return true;
+                    }
+                }
+            }
+        }
+
+        anchorX = startX;
+        anchorY = startY;
+        return false;
     }
 
     public override bool CanHitPlayer(Player target, ref int cooldownSlot)
