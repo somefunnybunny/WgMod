@@ -70,9 +70,6 @@ public class WgPlayerDrawLayer : PlayerDrawLayer
 
         Rectangle legFrame = player.legFrame;
         int frame = legFrame.Y / legFrame.Height;
-        // Frame [0] - Idle
-        // Frame [5] - Jump
-        // Frame [6 to 19] - Walk
 
         float legOffsetX = 0f;
         float legOffsetY = 0f;
@@ -109,30 +106,35 @@ public class WgPlayerDrawLayer : PlayerDrawLayer
             {
                 case SpriteSet.LayerType.Belly:
                     pos = PrepPos(position, 0f, MathF.Round(bellyOffset / 2f) * 2f, player.gravDir);
-                    scale = new Vector2(1f / bellySquish, 1f * bellySquish);
+                    scale = new Vector2(1f / bellySquish, bellySquish);
                     break;
                 case SpriteSet.LayerType.Legs:
                     pos = PrepPos(position, MathF.Round(legOffsetX / 2f) * 2f, MathF.Round(legOffsetY / 2f) * 2f, player.gravDir);
-                    scale = new Vector2(1f * baseSquish, 1f / baseSquish);
+                    scale = new Vector2(baseSquish, 1f / baseSquish);
                     break;
                 case SpriteSet.LayerType.Breasts:
                     pos = PrepPos(position, 0f, MathF.Round(bellyOffset / 2f) * 2f, player.gravDir);
-                    scale = new Vector2(1f * baseSquish, 1f / baseSquish);
+                    scale = new Vector2(baseSquish, 1f / baseSquish);
                     break;
                 default:
                     pos = PrepPos(position, 0f, 0f, player.gravDir);
                     scale = Vector2.One;
                     break;
             }
+
+            // Grow the current stage subtly toward the next one. Blob is the special case:
+            // its progress scales continuously all the way to the doubled Mega Blob state.
+            scale *= wg.GetVisualGrowthScale(layer.Type);
+
             Rectangle layerFrame = layer.Frame(set, stageData);
             DrawData drawData = new(
-                layer.Texture.Value, // The texture to render.
-                pos, // Position to render at.
-                layerFrame, // Source rectangle.
-                skinColor, // Color.
-                0f, // Rotation.
-                layerFrame.Size() * 0.5f, // Origin. Uses the texture's center.
-                scale, // Scale.
+                layer.Texture.Value,
+                pos,
+                layerFrame,
+                skinColor,
+                0f,
+                layerFrame.Size() * 0.5f,
+                scale,
                 drawInfo.playerEffect
             );
             drawInfo.DrawDataCache.Add(drawData);
@@ -172,7 +174,7 @@ public class WgPlayerDrawLayer : PlayerDrawLayer
             foreach (SpriteSet.Layer layer in layers)
             {
                 Rectangle layerFrame = layer.Texture.Frame(1, set.FrameCount, 0, stageData.Frame);
-                camera.SpriteBatch.Draw(layer.Texture.Value, layerPos, layerFrame, drawColor, 0f, layerFrame.Size() * 0.5f, 1f, effects, 0f);
+                camera.SpriteBatch.Draw(layer.Texture.Value, layerPos, layerFrame, drawColor, 0f, layerFrame.Size() * 0.5f, wg.GetVisualGrowthScale(layer.Type), effects, 0f);
             }
         }
 
@@ -182,7 +184,7 @@ public class WgPlayerDrawLayer : PlayerDrawLayer
         int armStage = stageData.Arm;
         Texture2D texture = armStage >= 0 ? set.ArmLayers[armStage].Texture.Value : TextureAssets.Players[drawPlayer.skinVariant, 3].Value;
         Rectangle frame = texture.Frame(9, 4, 2, 0);
-        camera.SpriteBatch.Draw(texture, drawPos + new Vector2(0f, -4f), frame, drawColor, 0f, frame.Size() * 0.5f, 1f, effects, 0f);
+        camera.SpriteBatch.Draw(texture, drawPos + new Vector2(0f, -4f), frame, drawColor, 0f, frame.Size() * 0.5f, wg.GetVisualGrowthScale(SpriteSet.LayerType.Arms), effects, 0f);
 
         DrawLayers(set.TopLayers);
     }
