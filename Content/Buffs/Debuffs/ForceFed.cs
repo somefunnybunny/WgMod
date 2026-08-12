@@ -49,10 +49,38 @@ public class ForceFedPlayer : ModPlayer
 {
     float _customFatPerCycle;
 
+    public void AddStackingForceFed(int duration)
+    {
+        duration = Math.Max(duration, 1);
+        int buffType = ModContent.BuffType<ForceFed>();
+        int buffIndex = Player.FindBuffIndex(buffType);
+
+        if (buffIndex >= 0)
+            Player.buffTime[buffIndex] += duration;
+        else
+            Player.AddBuff(buffType, duration);
+    }
+
     public void ApplyCustomForceFed(int duration, float fatPerCycle)
     {
-        _customFatPerCycle = MathF.Max(0f, fatPerCycle);
-        Player.AddBuff(ModContent.BuffType<ForceFed>(), Math.Max(duration, 1));
+        duration = Math.Max(duration, 1);
+        fatPerCycle = MathF.Max(0f, fatPerCycle);
+        int buffType = ModContent.BuffType<ForceFed>();
+        int buffIndex = Player.FindBuffIndex(buffType);
+
+        // Never allow a weaker slime to overwrite a stronger active feeding effect.
+        _customFatPerCycle = MathF.Max(_customFatPerCycle, fatPerCycle);
+
+        if (buffIndex >= 0)
+        {
+            // Slime applications do not stack their full durations, but a new application can
+            // refresh a shorter remaining timer to at least the new slime's duration.
+            Player.buffTime[buffIndex] = Math.Max(Player.buffTime[buffIndex], duration);
+        }
+        else
+        {
+            Player.AddBuff(buffType, duration);
+        }
     }
 
     public float GetFatPerCycle()
