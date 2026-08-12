@@ -10,6 +10,7 @@ using Terraria.GameContent;
 using Terraria.GameContent.Bestiary;
 using Terraria.ID;
 using Terraria.ModLoader;
+using WgMod.Common.Players;
 using WgMod.Content.Buffs.Debuffs;
 
 namespace WgMod.Content.NPCs.UndergroundDesert;
@@ -18,6 +19,10 @@ namespace WgMod.Content.NPCs.UndergroundDesert;
 [Credit(ProjectRole.Idea, Contributor.haydumbb)]
 public class HomingFood : ModNPC
 {
+    const int AggressiveTier = 6;
+    const int SaturatedForceFedTime = 60 * 60;
+    const int SaturatedExtension = 60 * 2;
+
     static readonly int[] _items =
     [
         ItemID.ChristmasPudding,
@@ -93,6 +98,33 @@ public class HomingFood : ModNPC
         }
     }
 
+    public override bool PreAI()
+    {
+        NPC.TargetClosest();
+        if (!NPC.HasPlayerTarget)
+            return true;
+
+        Player player = Main.player[NPC.target];
+        int tier = OverindulgenceChain.GetTier(player);
+        if (tier < AggressiveTier)
+            return true;
+
+        Vector2 direction = player.Center - NPC.Center;
+        if (direction.LengthSquared() > 0.001f)
+        {
+            direction.Normalize();
+            float speed = tier switch
+            {
+                6 => 8f,
+                7 => 10f,
+                _ => 12f,
+            };
+            NPC.velocity = direction * speed;
+        }
+
+        return false;
+    }
+
     public override void PostAI()
     {
         if (NPC.HasPlayerTarget)
@@ -141,10 +173,34 @@ public class HomingFood : ModNPC
         int tierBonusTime = 30 * nextOverindulgenceTier; // +0.5 seconds per Overindulgence tier.
         int forceFedTime = baseForceFedTime + tierBonusTime;
 
-        if (player.TryGetModPlayer(out ForceFedPlayer forceFed))
+        int forceFedType = ModContent.BuffType<ForceFed>();
+        int forceFedIndex = player.FindBuffIndex(forceFedType);
+        bool saturated = forceFedIndex >= 0 && player.buffTime[forceFedIndex] > SaturatedForceFedTime;
+
+        if (saturated && player.TryGetModPlayer(out WgPlayer wg))
+        {
+            // Once more than a minute of Force Fed is queued, cash out the Food's normal
+            // baseline Force Fed contribution as immediate body weight instead of adding
+            // several more seconds to an already huge timer.
+            Mass immediateMass = forceFedTime / (float)ForceFed.TicksPerCycle * ForceFed.FatPerCycle;
+            wg.CombatWeightText(wg.AddWeight(immediateMass), false);
+
+            if (player.TryGetModPlayer(out StrainingPlayer straining))
+                straining.AddFedMass(immediateMass, StrainingSource.ForceFed);
+
+            if (player.TryGetModPlayer(out ForceFedPlayer forceFed))
+                forceFed.AddStackingForceFed(SaturatedExtension);
+            else
+                player.buffTime[forceFedIndex] += SaturatedExtension;
+        }
+        else if (player.TryGetModPlayer(out ForceFedPlayer forceFed))
+        {
             forceFed.AddStackingForceFed(forceFedTime);
+        }
         else
-            player.AddBuff(ModContent.BuffType<ForceFed>(), forceFedTime);
+        {
+            player.AddBuff(forceFedType, forceFedTime);
+        }
 
         player.AddBuff(BuffID.WellFed, 60 * 4);
         OverindulgenceChain.Advance(player);
