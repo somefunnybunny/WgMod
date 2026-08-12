@@ -188,14 +188,14 @@ public class HomingFood : ModNPC
             if (player.TryGetModPlayer(out StrainingPlayer straining))
                 straining.AddFedMass(immediateMass, StrainingSource.ForceFed);
 
-            if (player.TryGetModPlayer(out ForceFedPlayer forceFed))
-                forceFed.AddStackingForceFed(SaturatedExtension);
+            if (player.TryGetModPlayer(out ForceFedPlayer saturatedForceFed))
+                saturatedForceFed.AddStackingForceFed(SaturatedExtension);
             else
                 player.buffTime[forceFedIndex] += SaturatedExtension;
         }
-        else if (player.TryGetModPlayer(out ForceFedPlayer forceFed))
+        else if (player.TryGetModPlayer(out ForceFedPlayer stackingForceFed))
         {
-            forceFed.AddStackingForceFed(forceFedTime);
+            stackingForceFed.AddStackingForceFed(forceFedTime);
         }
         else
         {
