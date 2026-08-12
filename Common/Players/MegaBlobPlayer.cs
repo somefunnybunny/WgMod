@@ -35,7 +35,6 @@ public class MegaBlobPlayer : ModPlayer
             return;
         }
 
-        // Stop any use animation/channel that began before the player crossed into Mega Blob.
         Player.itemAnimation = 0;
         Player.itemTime = 0;
         Player.reuseDelay = 0;
@@ -96,13 +95,15 @@ public class MegaBlobPlayer : ModPlayer
         if (Player.TryGetModPlayer(out StrainingPlayer straining) && straining.Stacks > 0)
             visualScale *= straining.SizeFactor;
 
-        // Before the physical hitbox has caught up with visual growth, supply exactly the
-        // missing vertical camera shift. Once the taller hitbox exists, its center takes over.
         float physicalScale = _megaHitboxScaled
             ? Player.height / (float)Player.defaultHeight
             : 1f;
         float missingScale = MathF.Max(0f, visualScale - physicalScale);
         Main.screenPosition.Y -= Player.defaultHeight * 0.5f * missingScale * Player.gravDir;
+
+        // The enlarged sprites are deliberately lifted above their old Blob anchors. Follow part
+        // of that lift so the camera focuses on the actual body mass instead of the old foot line.
+        Main.screenPosition.Y += wg.GetVisualGrowthLift(SpriteSet.LayerType.Fixed) * 0.5f;
     }
 
     void UpdateMegaBlobHitbox()
