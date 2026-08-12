@@ -2,7 +2,7 @@ namespace WgMod;
 
 public static class WeightStage
 {
-    public const int Count = 10; // The total amount of stages and player sprites
+    public const int Count = 11; // The total amount of stages. Mega Blob reuses the Blob sprite row at a larger scale.
     public const int Max = Count - 1; // The last weight stage
 
     public const int Regular = 0;
@@ -15,6 +15,7 @@ public static class WeightStage
     public const int Immobile = 7; // Stage at which the player would be considered immobile under normal conditions
     public const int Encumbered = 8;
     public const int Blob = 9; // Stage at which the player can no longer move their arms
+    public const int MegaBlob = 10; // A doubled Blob state with item use disabled
 
     public const int ForcedImmobile = Encumbered; // Stage at which the player will no longer move, at all
     public const int DamageReduction = Overweight; // Stage at which damage reduction starts being applied
