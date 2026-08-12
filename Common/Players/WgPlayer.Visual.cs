@@ -126,11 +126,21 @@ public partial class WgPlayer
         float extraScale = MathF.Max(0f, scale - 1f);
         float lift = Player.defaultHeight * 0.75f * extraScale;
 
-        // The head needs substantially more clearance than the torso at Mega Blob scale.
         if (layerType == SpriteSet.LayerType.Fixed)
-            lift *= 1.35f;
+            lift *= 1.12f;
 
         return -lift * Player.gravDir;
+    }
+
+    internal float GetHeadGrowthLift()
+    {
+        float lift = GetVisualGrowthLift(SpriteSet.LayerType.Fixed);
+        if (Weight.GetStage() < WeightStage.Blob)
+            return lift;
+
+        float extraScale = MathF.Max(0f, GetVisualGrowthScale(SpriteSet.LayerType.Fixed) - 1f);
+        float extraHeadClearance = Player.defaultHeight * 0.30f * extraScale;
+        return lift - extraHeadClearance * Player.gravDir;
     }
 
     void UpdateJiggle()
