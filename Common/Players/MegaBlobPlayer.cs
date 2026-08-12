@@ -24,6 +24,16 @@ public class MegaBlobPlayer : ModPlayer
         return !IsMegaBlob();
     }
 
+    public override bool CanStartExtraJump(ExtraJump jump)
+    {
+        return !IsMegaBlob();
+    }
+
+    public override bool CanShowExtraJumpVisuals(ExtraJump jump)
+    {
+        return !IsMegaBlob();
+    }
+
     public override void PreUpdateMovement()
     {
         if (!IsMegaBlob() || Player.dead)
@@ -32,6 +42,8 @@ public class MegaBlobPlayer : ModPlayer
         Player.controlJump = false;
         Player.releaseJump = true;
         Player.jump = 0;
+        Player.blockExtraJumps = true;
+        Player.ConsumeAllExtraJumps();
     }
 
     public override void PostUpdate()
