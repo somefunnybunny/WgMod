@@ -38,6 +38,8 @@ public class StrangeFeelingPlayer : ModPlayer
     int _timer;
     int _bloatingTimer;
 
+    public bool Active => _active;
+
     public void Activate()
     {
         if (_active)
