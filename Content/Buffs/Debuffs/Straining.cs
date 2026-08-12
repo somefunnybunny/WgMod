@@ -9,6 +9,14 @@ using WgMod.Common.Players;
 
 namespace WgMod.Content.Buffs.Debuffs;
 
+public enum StrainingSource
+{
+    ForceFed,
+    PrismaticStuffing,
+    Bloated,
+    SugarSpirit
+}
+
 public class Straining : ModBuff
 {
     public override string Texture => "WgMod/Content/Buffs/Debuffs/Bloated";
@@ -55,14 +63,16 @@ public class StrainingPlayer : ModPlayer
     public const int MaxStacks = 7;
     public const float FedMassPerStack = 20f;
     public const int BloatedTimePerStack = 60 * 25;
+    public const int SugarSpiritsPerStack = 3;
 
     float _fedMassPressure;
     int _bloatedTimePressure;
+    int _sugarSpiritPressure;
     bool _exploded;
 
     public int Stacks { get; private set; }
 
-    public void AddFedMass(float mass)
+    public void AddFedMass(float mass, StrainingSource source)
     {
         if (mass <= 0f || !IsBlobbed())
             return;
@@ -71,7 +81,7 @@ public class StrainingPlayer : ModPlayer
         while (_fedMassPressure >= FedMassPerStack && Stacks < MaxStacks)
         {
             _fedMassPressure -= FedMassPerStack;
-            AddStack();
+            AddStack(source);
             if (_exploded)
                 return;
         }
@@ -86,7 +96,22 @@ public class StrainingPlayer : ModPlayer
         while (_bloatedTimePressure >= BloatedTimePerStack && Stacks < MaxStacks)
         {
             _bloatedTimePressure -= BloatedTimePerStack;
-            AddStack();
+            AddStack(StrainingSource.Bloated);
+            if (_exploded)
+                return;
+        }
+    }
+
+    public void AddSugarSpiritPossession()
+    {
+        if (!IsBlobbed())
+            return;
+
+        _sugarSpiritPressure++;
+        while (_sugarSpiritPressure >= SugarSpiritsPerStack && Stacks < MaxStacks)
+        {
+            _sugarSpiritPressure -= SugarSpiritsPerStack;
+            AddStack(StrainingSource.SugarSpirit);
             if (_exploded)
                 return;
         }
@@ -110,12 +135,12 @@ public class StrainingPlayer : ModPlayer
             Player.AddBuff(ModContent.BuffType<Straining>(), 2);
     }
 
-    void AddStack()
+    void AddStack(StrainingSource source)
     {
         Stacks++;
         if (Stacks >= MaxStacks)
         {
-            Explode();
+            Explode(source);
             return;
         }
 
@@ -127,7 +152,7 @@ public class StrainingPlayer : ModPlayer
         return Player.TryGetModPlayer(out WgPlayer wg) && wg.Weight.GetStage() >= WeightStage.Blob;
     }
 
-    void Explode()
+    void Explode(StrainingSource source)
     {
         if (_exploded || Player.dead)
             return;
@@ -151,8 +176,17 @@ public class StrainingPlayer : ModPlayer
             dust.noGravity = Main.rand.NextBool();
         }
 
+        string reason = source switch
+        {
+            StrainingSource.ForceFed => Player.name + " was force-fed far past their breaking point.",
+            StrainingSource.PrismaticStuffing => Player.name + " burst in a spectacular shower of prismatic stuffing.",
+            StrainingSource.Bloated => Player.name + " couldn't contain the pressure any longer.",
+            StrainingSource.SugarSpirit => Player.name + " was possessed by one Sugar Spirit too many.",
+            _ => Player.name + " finally burst from the strain."
+        };
+
         Player.KillMe(
-            PlayerDeathReason.ByCustomReason(Player.name + " finally burst from the strain."),
+            PlayerDeathReason.ByCustomReason(reason),
             99999d,
             0
         );
@@ -163,6 +197,7 @@ public class StrainingPlayer : ModPlayer
         Stacks = 0;
         _fedMassPressure = 0f;
         _bloatedTimePressure = 0;
+        _sugarSpiritPressure = 0;
         _exploded = false;
     }
 }
