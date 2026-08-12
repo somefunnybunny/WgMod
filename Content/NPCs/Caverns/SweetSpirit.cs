@@ -126,6 +126,12 @@ public class SweetSpirit : ModNPC
                 if (NPC.HasPlayerTarget)
                 {
                     Player player = Main.player[NPC.target];
+                    if (player.dead)
+                    {
+                        SetState(State.Wandering);
+                        break;
+                    }
+
                     int tier = PossessionChain.GetTier(player);
                     NPC.direction = -player.direction;
                     Vector2 target = GetEnterPosition(player);
@@ -140,6 +146,12 @@ public class SweetSpirit : ModNPC
                 if (NPC.HasPlayerTarget)
                 {
                     Player player = Main.player[NPC.target];
+                    if (player.dead)
+                    {
+                        SetState(State.Wandering);
+                        break;
+                    }
+
                     int tier = PossessionChain.GetTier(player);
                     NPC.direction = -player.direction;
                     NPC.velocity = GetEnterPosition(player) - NPC.Center;
@@ -158,20 +170,22 @@ public class SweetSpirit : ModNPC
                     SetState(State.Wandering);
                 break;
             case State.Possess:
-                if (NPC.HasPlayerTarget && Main.player[NPC.target].TryGetModPlayer(out WgPlayer wg))
+                if (NPC.HasPlayerTarget)
                 {
                     Player player = Main.player[NPC.target];
-                    int stage = wg.Weight.GetStage();
-                    bool alreadyMegaBlobbed = stage >= WeightStage.MegaBlob;
-                    Mass mass = alreadyMegaBlobbed
-                        ? 10f
-                        : (Weight.FromStage(stage + 1).Mass - Weight.FromStage(stage).Mass) * 0.5f + 10f;
-                    wg.CombatWeightText(wg.AddWeight(mass), false);
-                    PossessionChain.Advance(player);
+                    if (!player.dead && player.active && player.TryGetModPlayer(out WgPlayer wg))
+                    {
+                        int stage = wg.Weight.GetStage();
+                        bool alreadyMegaBlobbed = stage >= WeightStage.MegaBlob;
+                        Mass mass = alreadyMegaBlobbed
+                            ? 10f
+                            : (Weight.FromStage(stage + 1).Mass - Weight.FromStage(stage).Mass) * 0.5f + 10f;
+                        wg.CombatWeightText(wg.AddWeight(mass), false);
+                        PossessionChain.Advance(player);
 
-                    // Mega Blob is now the pressure ceiling: every three further possessions strain it.
-                    if (alreadyMegaBlobbed && player.TryGetModPlayer(out StrainingPlayer straining))
-                        straining.AddSugarSpiritPossession();
+                        if (alreadyMegaBlobbed && player.TryGetModPlayer(out StrainingPlayer straining))
+                            straining.AddSugarSpiritPossession();
+                    }
                 }
                 NPC.life = 0;
                 break;
