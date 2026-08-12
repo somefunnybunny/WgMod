@@ -146,25 +146,6 @@ public class StrainingPlayer : ModPlayer
         UpdateScaledHitbox();
     }
 
-    public override void TransformDrawData(ref PlayerDrawSet drawInfo)
-    {
-        if (Stacks <= 0)
-            return;
-
-        float scaleFactor = SizeFactor;
-        for (int i = 0; i < drawInfo.DrawDataCache.Count; i++)
-        {
-            DrawData data = drawInfo.DrawDataCache[i];
-
-            // Preserve special destination-rectangle entries exactly as produced by their
-            // draw layers. Scaling those manually caused some custom fat-body layers to vanish.
-            if (!data.useDestinationRectangle)
-                data.scale *= scaleFactor;
-
-            drawInfo.DrawDataCache[i] = data;
-        }
-    }
-
     void UpdateScaledHitbox()
     {
         if (Stacks > 0 && !Player.mount.Active && !Player.isLockedToATile)
