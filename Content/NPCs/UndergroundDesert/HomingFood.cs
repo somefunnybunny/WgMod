@@ -135,7 +135,11 @@ public class HomingFood : ModNPC
             return;
 
         _fedPlayer = true;
-        player.AddBuff(ModContent.BuffType<ForceFed>(), (int)(ForceFed.TicksPerCycle * 1.5f));
+        if (player.TryGetModPlayer(out ForceFedPlayer forceFed))
+            forceFed.AddStackingForceFed((int)(ForceFed.TicksPerCycle * 1.5f));
+        else
+            player.AddBuff(ModContent.BuffType<ForceFed>(), (int)(ForceFed.TicksPerCycle * 1.5f));
+
         player.AddBuff(BuffID.WellFed, 60 * 4);
         OverindulgenceChain.Advance(player);
         SoundEngine.PlaySound(SoundID.Item2, NPC.Center);
