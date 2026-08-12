@@ -39,6 +39,13 @@ public class SpriteSet
     [JsonIgnore] public int ArmorAltasWidth { get; private set; }
     [JsonIgnore] public int ArmorAltasHeight { get; private set; }
 
+    static int ResolveSpriteStage(int stage)
+    {
+        // Mega Blob deliberately reuses the existing Blob artwork. Its larger appearance is
+        // produced by the continuous-growth draw scaling rather than requiring another sprite row.
+        return stage >= WeightStage.MegaBlob ? WeightStage.Blob : stage;
+    }
+
     public static Stage GetStage(int stage)
     {
         return GetStage(stage, out _);
@@ -46,6 +53,7 @@ public class SpriteSet
 
     public static Stage GetStage(int stage, out SpriteSet set)
     {
+        stage = ResolveSpriteStage(stage);
         if (Current.Stages.TryGetValue(stage, out Stage result))
         {
             set = Current;
@@ -59,6 +67,7 @@ public class SpriteSet
 
     public static SpriteSet GetSet(int stage)
     {
+        stage = ResolveSpriteStage(stage);
         if (Current.Stages.ContainsKey(stage))
             return Current;
         return Fallback;
