@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using Microsoft.Xna.Framework;
 using Terraria;
@@ -15,12 +16,17 @@ public class FeedingManEater : ModNPC
     const int FeedRefreshInterval = 15;
     const int FeedDuration = 35;
     const int NarrativeInterval = 60 * 5;
+    const int OpenSpaceSearchRadiusTiles = 22;
+    const float CarrySpeed = 9f;
+    const float CarryArrivalDistance = 10f;
 
     int _grabbedPlayer = -1;
     int _releasedPlayer = -1;
     int _feedTimer;
     int _narrativeTimer;
     int _narrativeStep;
+    bool _carrying;
+    Vector2 _feedingPosition;
 
     public override string Texture => $"Terraria/Images/NPC_{NPCID.ManEater}";
 
@@ -108,14 +114,17 @@ public class FeedingManEater : ModNPC
         return false;
     }
 
+    public override bool PreAI()
+    {
+        if (_grabbedPlayer < 0)
+            return true;
+
+        UpdateGrab();
+        return false;
+    }
+
     public override void AI()
     {
-        if (_grabbedPlayer >= 0)
-        {
-            UpdateGrab();
-            return;
-        }
-
         if (_releasedPlayer >= 0)
         {
             NPC.target = 255;
@@ -142,9 +151,13 @@ public class FeedingManEater : ModNPC
         _feedTimer = 0;
         _narrativeTimer = 0;
         _narrativeStep = 0;
+        _feedingPosition = FindOpenFeedingPosition(player);
+        _carrying = Vector2.DistanceSquared(NPC.Center, _feedingPosition) > CarryArrivalDistance * CarryArrivalDistance;
         NPC.netUpdate = true;
 
-        Say(player, "The Man Eater coils around me and locks me in place... wait, why is it trying to feed me?");
+        Say(player, _carrying
+            ? "The Man Eater coils around me and starts hauling me away... wait, it's looking for somewhere to keep me?"
+            : "The Man Eater coils around me and locks me in place... wait, why is it trying to feed me?");
         Cue(player, "*caught!*", Color.YellowGreen);
         SoundEngine.PlaySound(SoundID.Item7, player.Center);
     }
@@ -173,16 +186,50 @@ public class FeedingManEater : ModNPC
             return;
         }
 
+        RestrainPlayer(player);
+
+        if (_carrying)
+        {
+            Vector2 delta = _feedingPosition - NPC.Center;
+            if (delta.LengthSquared() <= CarryArrivalDistance * CarryArrivalDistance)
+            {
+                NPC.Center = _feedingPosition;
+                NPC.velocity = Vector2.Zero;
+                _carrying = false;
+                Say(player, "It found an open spot and holds me there... there's way too much room around me for comfort.");
+                Cue(player, "*held in place*", Color.YellowGreen);
+                NPC.netUpdate = true;
+            }
+            else
+            {
+                Vector2 step = delta;
+                if (step.Length() > CarrySpeed)
+                {
+                    step.Normalize();
+                    step *= CarrySpeed;
+                }
+
+                Vector2 nextCenter = NPC.Center + step;
+                if (CanOccupyFeedingSpace(nextCenter, player, false))
+                    NPC.Center = nextCenter;
+                else
+                {
+                    // If the direct path clips terrain, stop at the nearest safe point rather than
+                    // dragging the victim through blocks. Feeding begins from here.
+                    _feedingPosition = NPC.Center;
+                    _carrying = false;
+                    Say(player, "The vine can't carry me any farther, so it tightens around me here instead...");
+                    NPC.netUpdate = true;
+                }
+            }
+
+            player.Center = NPC.Center;
+            player.velocity = Vector2.Zero;
+            return;
+        }
+
         player.Center = NPC.Center;
         player.velocity = Vector2.Zero;
-        player.controlLeft = false;
-        player.controlRight = false;
-        player.controlUp = false;
-        player.controlDown = false;
-        player.controlJump = false;
-        player.controlHook = false;
-        player.jump = 0;
-        player.fallStart = (int)(player.position.Y / 16f);
 
         _feedTimer++;
         if (_feedTimer >= FeedRefreshInterval)
@@ -202,22 +249,113 @@ public class FeedingManEater : ModNPC
             switch (_narrativeStep)
             {
                 case 1:
-                    Say(player, "It isn't letting up... every gulp is making me heavier while it keeps me pinned right here.");
+                    Say(player, "It isn't letting up... every gulp is making me heavier while it keeps me pinned in all this open space.");
                     break;
                 case 2:
-                    Say(player, "I can feel the weight piling on now. If I don't kill this thing, it's going to keep feeding me until I can't move at all.");
+                    Say(player, "I can feel the weight piling on now. It picked somewhere with enough room that getting bigger isn't going to save me.");
                     break;
                 case 3:
-                    Say(player, "Another mouthful... and another. My body is getting too heavy to fight the vine as easily as before.");
+                    Say(player, "Another mouthful... and another. There's still empty space around me, and the plant seems determined to fill it with me.");
                     break;
                 case 4:
-                    Say(player, "It really means to keep going until I'm enormous. I can barely tell where the feeding ends and all this new weight begins.");
+                    Say(player, "It really planned this out... it dragged me somewhere I could keep expanding and now it just keeps feeding me.");
                     break;
                 default:
-                    Say(player, "Still feeding me... still making me heavier. It isn't going to stop unless I make it stop.");
+                    Say(player, "Still feeding me... still making me bigger. It isn't going to stop unless I make it stop.");
                     break;
             }
         }
+    }
+
+    void RestrainPlayer(Player player)
+    {
+        player.controlLeft = false;
+        player.controlRight = false;
+        player.controlUp = false;
+        player.controlDown = false;
+        player.controlJump = false;
+        player.controlHook = false;
+        player.jump = 0;
+        player.fallStart = (int)(player.position.Y / 16f);
+    }
+
+    Vector2 FindOpenFeedingPosition(Player player)
+    {
+        Vector2 caughtAt = player.Center;
+        Vector2 best = NPC.Center;
+        float bestScore = float.NegativeInfinity;
+
+        for (int radius = 2; radius <= OpenSpaceSearchRadiusTiles; radius += 2)
+        {
+            for (int x = -radius; x <= radius; x += 2)
+            {
+                TryCandidate(caughtAt + new Vector2(x * 16f, -radius * 16f));
+                TryCandidate(caughtAt + new Vector2(x * 16f, radius * 16f));
+            }
+
+            for (int y = -radius + 2; y <= radius - 2; y += 2)
+            {
+                TryCandidate(caughtAt + new Vector2(-radius * 16f, y * 16f));
+                TryCandidate(caughtAt + new Vector2(radius * 16f, y * 16f));
+            }
+        }
+
+        return best;
+
+        void TryCandidate(Vector2 candidate)
+        {
+            if (!CanOccupyFeedingSpace(candidate, player, true))
+                return;
+
+            float distancePenalty = Vector2.DistanceSquared(candidate, caughtAt) * 0.001f;
+            float clearance = MeasureClearance(candidate, player);
+            float score = clearance * 100f - distancePenalty;
+            if (score > bestScore)
+            {
+                bestScore = score;
+                best = candidate;
+            }
+        }
+    }
+
+    bool CanOccupyFeedingSpace(Vector2 center, Player player, bool requireMegaBlobClearance)
+    {
+        int width;
+        int height;
+
+        if (requireMegaBlobClearance)
+        {
+            width = WeightValues.GetHitboxWidthInTiles(WeightStage.MegaBlob) * 16 - 12;
+            height = player.defaultHeight * 2;
+        }
+        else
+        {
+            width = Math.Max(player.width, NPC.width);
+            height = Math.Max(player.height, NPC.height);
+        }
+
+        Vector2 topLeft = center - new Vector2(width * 0.5f, height * 0.5f);
+        return !Collision.SolidCollision(topLeft, width, height);
+    }
+
+    float MeasureClearance(Vector2 center, Player player)
+    {
+        int baseWidth = WeightValues.GetHitboxWidthInTiles(WeightStage.MegaBlob) * 16 - 12;
+        int baseHeight = player.defaultHeight * 2;
+        float clearance = 0f;
+
+        // Reward candidates that still have room after the minimum Mega Blob rectangle fits.
+        for (int padding = 16; padding <= 96; padding += 16)
+        {
+            int width = baseWidth + padding * 2;
+            int height = baseHeight + padding * 2;
+            Vector2 topLeft = center - new Vector2(width * 0.5f, height * 0.5f);
+            if (Collision.SolidCollision(topLeft, width, height))
+                break;
+            clearance += 1f;
+        }
+
+        return clearance;
     }
 
     bool CanGrab(Player player)
@@ -234,6 +372,8 @@ public class FeedingManEater : ModNPC
         _feedTimer = 0;
         _narrativeTimer = 0;
         _narrativeStep = 0;
+        _carrying = false;
+        _feedingPosition = Vector2.Zero;
         NPC.target = 255;
         NPC.netUpdate = true;
     }
@@ -254,11 +394,16 @@ public class FeedingManEater : ModNPC
     {
         writer.Write(_grabbedPlayer);
         writer.Write(_releasedPlayer);
+        writer.Write(_carrying);
+        writer.Write(_feedingPosition.X);
+        writer.Write(_feedingPosition.Y);
     }
 
     public override void ReceiveExtraAI(BinaryReader reader)
     {
         _grabbedPlayer = reader.ReadInt32();
         _releasedPlayer = reader.ReadInt32();
+        _carrying = reader.ReadBoolean();
+        _feedingPosition = new Vector2(reader.ReadSingle(), reader.ReadSingle());
     }
 }
