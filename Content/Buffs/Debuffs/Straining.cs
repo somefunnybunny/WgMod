@@ -152,30 +152,26 @@ public class StrainingPlayer : ModPlayer
             return;
 
         float scaleFactor = SizeFactor;
-        Vector2 center = drawInfo.Center;
-        Vector2 anchor = center + new Vector2(0f, Player.height * 0.5f);
-
         for (int i = 0; i < drawInfo.DrawDataCache.Count; i++)
         {
             DrawData data = drawInfo.DrawDataCache[i];
 
+            // Keep each established layer position intact. Moving every cached draw entry
+            // around a reconstructed anchor can push custom fat-body layers off-screen.
             if (data.useDestinationRectangle)
             {
                 Rectangle rect = data.destinationRectangle;
-                Vector2 rectCenter = new(rect.Center.X, rect.Center.Y);
-                Vector2 scaledCenter = anchor + (rectCenter - anchor) * scaleFactor;
                 int width = Math.Max(1, (int)MathF.Round(rect.Width * scaleFactor));
                 int height = Math.Max(1, (int)MathF.Round(rect.Height * scaleFactor));
                 data.destinationRectangle = new Rectangle(
-                    (int)MathF.Round(scaledCenter.X - width * 0.5f),
-                    (int)MathF.Round(scaledCenter.Y - height * 0.5f),
+                    rect.Center.X - width / 2,
+                    rect.Center.Y - height / 2,
                     width,
                     height
                 );
             }
             else
             {
-                data.position = anchor + (data.position - anchor) * scaleFactor;
                 data.scale *= scaleFactor;
             }
 
