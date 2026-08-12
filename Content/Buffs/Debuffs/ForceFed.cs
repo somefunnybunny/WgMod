@@ -40,6 +40,11 @@ public class ForceFed : ModBuff
             float fatPerCycle = forceFed.GetFatPerCycle();
             wg.CombatWeightText(fatPerCycle, false);
             wg.AddStomach(fatPerCycle);
+
+            // At Blob, count the amount being forced in even if the visible weight is already clamped.
+            if (player.TryGetModPlayer(out StrainingPlayer straining))
+                straining.AddFedMass(fatPerCycle);
+
             SoundEngine.PlaySound(WgSounds.Gulp, player.Center);
         }
     }
