@@ -11,6 +11,7 @@ namespace WgMod.Content.Buffs.Debuffs;
 
 public enum StrainingSource
 {
+    Generic,
     ForceFed,
     PrismaticStuffing,
     Bloated,
