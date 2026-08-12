@@ -56,10 +56,8 @@ public class FatBuff : WgBuffBase
             string line = this.GetLocalization("HitboxIncrease").Format((WeightValues.GetHitboxWidthInTiles(stage) - 2).Range(0, WeightValues.GetHitboxWidthInTiles(WeightStage.Max) - 2));
             tip += "\n" + line;
         }
-        if (stage >= WeightStage.Blob)
-            tip += "\n" + this.GetLocalization("CantMoveArms");
         if (stage >= WeightStage.MegaBlob)
-            tip += "\nI can't use any items at this size.";
+            tip += "\nYou're so heavy even thinking about lifting your arms makes you tired. You can't use items or jump.";
 
         string admiration = stage switch
         {
@@ -89,7 +87,6 @@ public class FatBuff : WgBuffBase
             return;
         }
 
-        // Calculate factors
         int stage = wg.Weight.GetStage();
         if (stage >= WeightStage.DamageReduction)
             _damageReduction.Lerp(wg.Weight.GetClampedFactor(Weight.FromStage(WeightStage.DamageReduction), Weight.Immobile));
@@ -105,7 +102,6 @@ public class FatBuff : WgBuffBase
         else
             _lifeIncrease.Reset();
 
-        // Apply factors
         player.endurance += _damageReduction;
         player.statLifeMax2 += _lifeIncrease;
     }
