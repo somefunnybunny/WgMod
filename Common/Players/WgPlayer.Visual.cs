@@ -38,7 +38,7 @@ public partial class WgPlayer
             Main.RunOnMainThread(() =>
             {
                 WgArmor.SetupArmorLayers(this);
-                WgArmor.Render(Weight.GetStage(), ref _armorTarget, _armorLayers, Player.Male);
+                WgArmor.Render(Math.Min(Weight.GetStage(), WeightStage.Blob), ref _armorTarget, _armorLayers, Player.Male);
             });
         }
     }
