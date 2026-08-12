@@ -6,6 +6,7 @@ using Terraria;
 using Terraria.DataStructures;
 using Terraria.ModLoader;
 using WgMod.Common.Configs;
+using WgMod.Content.Buffs.Debuffs;
 
 namespace WgMod.Common.Players;
 
@@ -76,8 +77,46 @@ public partial class WgPlayer
         if (WgArmor.Enabled)
         {
             WgArmor.SetupArmorLayers(this);
-            WgArmor.Render(Weight.GetStage(), ref _armorTarget, _armorLayers, Player.Male);
+            WgArmor.Render(Math.Min(Weight.GetStage(), WeightStage.Blob), ref _armorTarget, _armorLayers, Player.Male);
         }
+    }
+
+    internal float GetVisualGrowthScale(SpriteSet.LayerType layerType)
+    {
+        int stage = Weight.GetStage();
+        float scale;
+
+        if (stage >= WeightStage.MegaBlob)
+        {
+            scale = 2f;
+        }
+        else
+        {
+            float progress = Math.Clamp(Weight.GetStageFactor(), 0f, 1f);
+            if (stage == WeightStage.Blob)
+            {
+                // Blob grows continuously all the way into the doubled Mega Blob state.
+                scale = float.Lerp(1f, 2f, progress);
+            }
+            else
+            {
+                // Earlier stages swell subtly toward the next sprite instead of snapping there.
+                float growth = layerType switch
+                {
+                    SpriteSet.LayerType.Belly => 0.12f,
+                    SpriteSet.LayerType.Breasts => 0.10f,
+                    SpriteSet.LayerType.Legs => 0.08f,
+                    SpriteSet.LayerType.Arms => 0.06f,
+                    _ => 0.05f,
+                };
+                scale = 1f + growth * progress;
+            }
+        }
+
+        if (Player.TryGetModPlayer(out StrainingPlayer straining) && straining.Stacks > 0)
+            scale *= straining.SizeFactor;
+
+        return scale;
     }
 
     void UpdateJiggle()
