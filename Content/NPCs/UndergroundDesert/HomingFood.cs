@@ -20,8 +20,8 @@ namespace WgMod.Content.NPCs.UndergroundDesert;
 public class HomingFood : ModNPC
 {
     const int AggressiveTier = 6;
-    const int SaturatedForceFedTime = 60 * 60;
-    const int SaturatedExtension = 60 * 2;
+    const float BaseFeedMass = 6f;
+    const float FeedMassPerTier = 1f;
 
     static readonly int[] _items =
     [
@@ -169,37 +169,17 @@ public class HomingFood : ModNPC
         _fedPlayer = true;
 
         int nextOverindulgenceTier = Math.Min(OverindulgenceChain.GetTier(player) + 1, OverindulgenceChain.MaxTier);
-        int baseForceFedTime = (int)(ForceFed.TicksPerCycle * 1.5f);
-        int tierBonusTime = 30 * nextOverindulgenceTier; // +0.5 seconds per Overindulgence tier.
-        int forceFedTime = baseForceFedTime + tierBonusTime;
+        Mass feedMass = BaseFeedMass + FeedMassPerTier * nextOverindulgenceTier;
 
-        int forceFedType = ModContent.BuffType<ForceFed>();
-        int forceFedIndex = player.FindBuffIndex(forceFedType);
-        bool saturated = forceFedIndex >= 0 && player.buffTime[forceFedIndex] > SaturatedForceFedTime;
-
-        if (saturated && player.TryGetModPlayer(out WgPlayer wg))
+        if (player.TryGetModPlayer(out WgPlayer wg))
         {
-            // Once more than a minute of Force Fed is queued, cash out the Food's normal
-            // baseline Force Fed contribution as immediate body weight instead of adding
-            // several more seconds to an already huge timer.
-            Mass immediateMass = forceFedTime / (float)ForceFed.TicksPerCycle * ForceFed.FatPerCycle;
-            wg.CombatWeightText(wg.AddWeight(immediateMass), false);
+            bool alreadyBlobbed = wg.Weight.GetStage() >= WeightStage.Blob;
+            wg.CombatWeightText(wg.AddWeight(feedMass), false);
 
-            if (player.TryGetModPlayer(out StrainingPlayer straining))
-                straining.AddFedMass(immediateMass, StrainingSource.ForceFed);
-
-            if (player.TryGetModPlayer(out ForceFedPlayer saturatedForceFed))
-                saturatedForceFed.AddStackingForceFed(SaturatedExtension);
-            else
-                player.buffTime[forceFedIndex] += SaturatedExtension;
-        }
-        else if (player.TryGetModPlayer(out ForceFedPlayer stackingForceFed))
-        {
-            stackingForceFed.AddStackingForceFed(forceFedTime);
-        }
-        else
-        {
-            player.AddBuff(forceFedType, forceFedTime);
+            // Blob is already weight-clamped, so count the attempted feeding mass directly
+            // toward Straining rather than relying on the visible weight change.
+            if (alreadyBlobbed && player.TryGetModPlayer(out StrainingPlayer straining))
+                straining.AddFedMass(feedMass, StrainingSource.ForceFed);
         }
 
         player.AddBuff(BuffID.WellFed, 60 * 4);
