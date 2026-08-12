@@ -25,8 +25,8 @@ public class EnemyDebuffSpawnControl : GlobalNPC
 
         int foodType = ModContent.NPCType<HomingFood>();
         int spiritType = ModContent.NPCType<SweetSpirit>();
-        bool preserveFood = foodTier >= 6;
-        bool preserveSpirit = spiritTier >= 6;
+        bool preserveFood = foodTier > 0;
+        bool preserveSpirit = spiritTier > 0;
 
         int[] npcTypes = new int[pool.Count];
         pool.Keys.CopyTo(npcTypes, 0);
