@@ -1,4 +1,5 @@
 using Terraria;
+using Terraria.ID;
 using Terraria.ModLoader;
 using WgMod.Common.Players;
 
@@ -6,6 +7,8 @@ namespace WgMod.Content.Buffs.Debuffs;
 
 public class DigestiveBloom : ModBuff
 {
+    public override string Texture => $"Terraria/Images/Buff_{BuffID.WellFed}";
+
     public override void SetStaticDefaults()
     {
         Main.debuff[Type] = true;
@@ -24,6 +27,8 @@ public class DigestiveBloom : ModBuff
 
 public class RoyalJelly : ModBuff
 {
+    public override string Texture => $"Terraria/Images/Buff_{BuffID.Honey}";
+
     public override void SetStaticDefaults()
     {
         Main.debuff[Type] = true;
@@ -42,6 +47,8 @@ public class RoyalJelly : ModBuff
 
 public class BuoyantBloat : ModBuff
 {
+    public override string Texture => $"Terraria/Images/Buff_{BuffID.Featherfall}";
+
     public override void SetStaticDefaults()
     {
         Main.debuff[Type] = true;
@@ -59,6 +66,8 @@ public class BuoyantBloat : ModBuff
 
 public class Thickened : ModBuff
 {
+    public override string Texture => $"Terraria/Images/Buff_{BuffID.Chilled}";
+
     public override void SetStaticDefaults()
     {
         Main.debuff[Type] = true;
@@ -78,6 +87,8 @@ public class Thickened : ModBuff
 
 public class DemonDough : ModBuff
 {
+    public override string Texture => $"Terraria/Images/Buff_{BuffID.OnFire}";
+
     public override void SetStaticDefaults()
     {
         Main.debuff[Type] = true;
