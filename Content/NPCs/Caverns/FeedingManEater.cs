@@ -2,6 +2,7 @@ using System.IO;
 using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.Audio;
+using Terraria.DataStructures;
 using Terraria.ID;
 using Terraria.ModLoader;
 using WgMod.Common.Players;
@@ -46,9 +47,20 @@ public class FeedingManEater : ModNPC
         if (player.TryGetModPlayer(out WgPlayer wg) && wg.Weight.GetStage() >= WeightStage.MegaBlob)
             return 0f;
 
-        // Intentionally common across the whole Jungle, including the surface, to mirror
-        // the broad habitat of ordinary Man Eaters while remaining easy enough to encounter.
         return 0.18f;
+    }
+
+    public override void OnSpawn(IEntitySource source)
+    {
+        // Vanilla Man Eater AI expects ai[0]/ai[1] to contain the tether tile.
+        // Natural modded NPC spawning doesn't automatically apply that vanilla special-spawn rule,
+        // so initialize a sensible anchor from the NPC's spawn position when none was supplied.
+        if (NPC.ai[0] == 0f && NPC.ai[1] == 0f)
+        {
+            NPC.ai[0] = (int)(NPC.Center.X / 16f);
+            NPC.ai[1] = (int)((NPC.position.Y + NPC.height) / 16f);
+            NPC.netUpdate = true;
+        }
     }
 
     public override bool CanHitPlayer(Player target, ref int cooldownSlot)
