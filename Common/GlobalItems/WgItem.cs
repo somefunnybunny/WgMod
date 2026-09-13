@@ -2,7 +2,9 @@ using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
+using WgMod.Common.Configs;
 using WgMod.Common.Players;
+using WgMod.Content.Items;
 
 namespace WgMod.Common.GlobalItems;
 
@@ -25,6 +27,20 @@ public class WgItem : GlobalItem
     {
         if (!player.TryGetModPlayer(out WgPlayer wg))
             return true;
+        if (!WgServerConfig.Instance.DisableFatBuffs && wg.Weight.GetStage() >= WeightStage.Blob)
+        {
+            bool allow = item.useStyle == ItemUseStyleID.None; // Unrelated
+            allow |= item.type == ModContent.ItemType<WeightManipulator>(); // Is dev object
+            allow |= item.type == ModContent.ItemType<WeightGainAdjuster>(); // Is (also) dev object
+            allow |= item.mountType != -1; // Is mount
+            allow |= item.useStyle == ItemUseStyleID.DrinkLiquid || item.useStyle == ItemUseStyleID.DrinkLong || item.useStyle == ItemUseStyleID.EatFood; // Is consumable
+            allow |= wg.PreventImmobility; // Mobility effects can restore ordinary item use, but grappling hooks remain blocked separately.
+            if (!allow)
+            {
+                wg.TriggerBlobArmSwing();
+                return false;
+            }
+        }
         if (ItemID.Sets.IsFood[item.type] && WgMod._buffTable.TryGetValue(item.buffType, out GainOptions gain) && gain.IsInstant)
         {
             if (wg.Stomach + gain.TotalGain > WgPlayer.StomachCapacity)
