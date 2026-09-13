@@ -51,7 +51,12 @@ public class WgArmsDrawLayer : PlayerDrawLayer
 
         int frameX = drawInfo.compFrontArmFrame.X / drawInfo.compFrontArmFrame.Width;
         int frameY = drawInfo.compFrontArmFrame.Y / drawInfo.compFrontArmFrame.Height;
-        if (wg._fakeWalk && frameX == 2 && frameY == 0)
+        if (wg.BlobArmSwingActive)
+        {
+            frameX = wg.BlobArmSwingFrame;
+            frameY = 1;
+        }
+        else if (wg._fakeWalk && frameX == 2 && frameY == 0)
         {
             frameX = wg._fakeWalkFrameX;
             frameY = 1;
