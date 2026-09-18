@@ -16,19 +16,23 @@ public partial class WgPlayer
         ModPacket packet = Mod.GetPacket(WgMod.MessageType.WgPlayerSync);
         packet.Write((byte)Player.whoAmI);
         packet.Write(Weight.Mass);
+        packet.Write(SoulWeight.Mass);
         packet.Write(Stomach);
         packet.Send(toWho, fromWho);
     }
 
     public void ReceivePlayerSync(BinaryReader reader)
     {
-        SetWeightForced(new Weight(reader.ReadSingle()));
+        Weight weight = new(reader.ReadSingle());
+        SetSoulWeightForced(new Weight(reader.ReadSingle()), false);
+        SetWeightForced(weight, false);
         SetStomachForced(reader.ReadSingle(), false);
     }
 
     public override void CopyClientState(ModPlayer targetCopy)
     {
         WgPlayer clone = (WgPlayer)targetCopy;
+        clone.SetSoulWeightForced(SoulWeight, false);
         clone.SetWeightForced(Weight, false);
         clone.SetStomachForced(Stomach, false);
     }
@@ -36,7 +40,7 @@ public partial class WgPlayer
     public override void SendClientChanges(ModPlayer clientPlayer)
     {
         WgPlayer clone = (WgPlayer)clientPlayer;
-        if (Weight != clone.Weight || Stomach != clone.Stomach)
+        if (Weight != clone.Weight || SoulWeight != clone.SoulWeight || Stomach != clone.Stomach)
             SyncPlayer(-1, Main.myPlayer, false);
     }
 
@@ -74,11 +78,17 @@ public partial class WgPlayer
     public override void SaveData(TagCompound tag)
     {
         tag[nameof(Weight)] = Weight.Mass.Value;
+        tag[nameof(SoulWeight)] = SoulWeight.Mass.Value;
         tag[nameof(Stomach)] = Stomach.Value;
     }
 
     public override void LoadData(TagCompound tag)
     {
+        float soulWeight = tag.Get<float>(nameof(SoulWeight));
+        if (soulWeight <= 0f || float.IsNaN(soulWeight) || !float.IsFinite(soulWeight))
+            soulWeight = Weight.Base.Mass;
+        SetSoulWeightForced(new Weight(soulWeight), false);
+
         if (tag.TryGet(nameof(Weight), out float w))
         {
             if (float.IsNaN(w) || !float.IsFinite(w))
