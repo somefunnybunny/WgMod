@@ -13,6 +13,7 @@ public class SoulWeightBuff : WgBuffBase
     {
         Main.buffNoTimeDisplay[Type] = true;
         Main.buffNoSave[Type] = true;
+        BuffID.Sets.TimeLeftDoesNotDecrease[Type] = true;
     }
 
     public override void ModifyBuffText(ref string buffName, ref string tip, ref int rare)
