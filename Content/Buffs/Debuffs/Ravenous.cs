@@ -38,14 +38,6 @@ public class RavenousPlayer : ModPlayer
             return;
 
         player.GetModPlayer<RavenousPlayer>().AddFeed(amount);
-
-        if (Main.netMode == NetmodeID.Server)
-        {
-            ModPacket packet = ModContent.GetInstance<WgMod>().GetPacket(WgMod.MessageType.RavenousStart);
-            packet.Write((byte)player.whoAmI);
-            packet.Write(amount.Value);
-            packet.Send();
-        }
     }
 
     public void AddFeed(Mass amount)
