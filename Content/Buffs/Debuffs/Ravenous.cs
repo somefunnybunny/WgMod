@@ -46,6 +46,9 @@ public class RavenousPlayer : ModPlayer
             return;
 
         _remainingFeed += amount;
+        Player.channel = false;
+        Player.itemAnimation = 0;
+        Player.itemTime = 0;
         Player.AddBuff(ModContent.BuffType<Ravenous>(), 2);
     }
 
@@ -56,7 +59,7 @@ public class RavenousPlayer : ModPlayer
 
     public override void SyncPlayer(int toWho, int fromWho, bool newPlayer)
     {
-        if (_remainingFeed <= 0f)
+        if (Main.netMode != NetmodeID.Server || _remainingFeed <= 0f)
             return;
 
         ModPacket packet = Mod.GetPacket(WgMod.MessageType.RavenousStart);
@@ -65,18 +68,22 @@ public class RavenousPlayer : ModPlayer
         packet.Send(toWho, fromWho);
     }
 
+    public override void SetControls()
+    {
+        if (Active)
+            Player.controlUseItem = false;
+    }
+
     public override bool PreItemCheck()
     {
         if (!Active)
             return true;
 
         _visualFood ??= new Item(ItemID.Apple);
+        Player.lastVisualizedSelectedItem = _visualFood;
 
         if (Player.itemAnimation <= 1)
-        {
-            Player.lastVisualizedSelectedItem = _visualFood;
             Player.ApplyItemAnimation(_visualFood);
-        }
 
         return true;
     }
