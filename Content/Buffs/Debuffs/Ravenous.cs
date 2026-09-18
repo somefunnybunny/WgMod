@@ -24,11 +24,12 @@ public class Ravenous : ModBuff
 
 public class RavenousPlayer : ModPlayer
 {
-    public const int PulseTicks = 15;
-    public const float FeedPerPulse = 2f;
+    public const int BiteCycleTicks = 60;
+    public const int CrunchTick = BiteCycleTicks / 2;
+    public const float FeedPerBite = 5f;
 
     Mass _remainingFeed;
-    int _pulseTimer;
+    int _biteTimer;
     Item _visualFood;
 
     public bool Active => _remainingFeed > 0f && Player.HasBuff(ModContent.BuffType<Ravenous>());
@@ -46,10 +47,13 @@ public class RavenousPlayer : ModPlayer
         if (amount <= 0f)
             return;
 
+        bool wasActive = _remainingFeed > 0f;
         _remainingFeed += amount;
         Player.channel = false;
         Player.itemAnimation = 0;
         Player.itemTime = 0;
+        if (!wasActive)
+            _biteTimer = 0;
         Player.AddBuff(ModContent.BuffType<Ravenous>(), 2);
     }
 
@@ -80,16 +84,21 @@ public class RavenousPlayer : ModPlayer
         if (!Active)
             return true;
 
-        _visualFood ??= new Item(ItemID.ChocolateChipCookie);
+        EnsureVisualFood();
         Player.lastVisualizedSelectedItem = _visualFood;
 
-        if (Player.itemAnimation <= 1)
+        if (Player.itemAnimationMax != BiteCycleTicks)
             Player.ApplyItemAnimation(_visualFood);
+
+        Player.itemAnimationMax = BiteCycleTicks;
+        Player.itemAnimation = Math.Max(BiteCycleTicks - _biteTimer, 1);
 
         Rectangle heldItemFrame = Item.GetDrawHitbox(_visualFood.type, Player);
         Player.ItemCheck_ApplyUseStyle(Player.HeightOffsetHitboxCenter, _visualFood, heldItemFrame);
 
-        return true;
+        // Ravenous owns the item animation while active. Skipping vanilla ItemCheck
+        // prevents the actually selected weapon/item from firing off the forced animation.
+        return false;
     }
 
     public override void PostUpdateBuffs()
@@ -108,18 +117,22 @@ public class RavenousPlayer : ModPlayer
 
         Player.AddBuff(ModContent.BuffType<Ravenous>(), 2);
 
-        _pulseTimer++;
-        if (_pulseTimer < PulseTicks)
+        _biteTimer++;
+
+        if (_biteTimer == CrunchTick && Player.whoAmI == Main.myPlayer)
+            PlayCrunch();
+
+        if (_biteTimer < BiteCycleTicks)
             return;
 
-        _pulseTimer = 0;
-        Mass pulse = MathF.Min(FeedPerPulse, _remainingFeed.Value);
-        _remainingFeed -= pulse;
+        _biteTimer = 0;
+        Mass bite = MathF.Min(FeedPerBite, _remainingFeed.Value);
+        _remainingFeed -= bite;
 
         if (Player.whoAmI == Main.myPlayer && Player.TryGetModPlayer(out WgPlayer wg))
         {
-            wg.CombatWeightText(pulse, false);
-            wg.AddStomach(pulse);
+            wg.CombatWeightText(bite, false);
+            wg.AddStomach(bite);
             SoundEngine.PlaySound(WgSounds.Gulp, Player.Center);
         }
 
@@ -132,10 +145,40 @@ public class RavenousPlayer : ModPlayer
         Clear();
     }
 
+    void EnsureVisualFood()
+    {
+        if (_visualFood != null)
+            return;
+
+        _visualFood = new Item(ItemID.ChocolateChipCookie)
+        {
+            useAnimation = BiteCycleTicks,
+            useTime = BiteCycleTicks,
+            autoReuse = false
+        };
+    }
+
+    void PlayCrunch()
+    {
+        EnsureVisualFood();
+
+        if (_visualFood.UseSound.HasValue)
+            SoundEngine.PlaySound(_visualFood.UseSound.Value, Player.Center);
+
+        Vector2 mouth = Player.MouthPosition.Value + new Vector2(Player.direction * 4f, 0f);
+        for (int i = 0; i < 6; i++)
+        {
+            Vector2 velocity = new(Player.direction * Main.rand.NextFloat(0.4f, 1.8f), Main.rand.NextFloat(-1.4f, 0.4f));
+            Dust.NewDustPerfect(mouth, DustID.Dirt, velocity, 0, new Color(139, 90, 43), Main.rand.NextFloat(0.7f, 1.05f));
+        }
+    }
+
     void Clear()
     {
         _remainingFeed = 0f;
-        _pulseTimer = 0;
+        _biteTimer = 0;
+        Player.itemAnimation = 0;
+        Player.itemTime = 0;
         Player.ClearBuff(ModContent.BuffType<Ravenous>());
     }
 }
