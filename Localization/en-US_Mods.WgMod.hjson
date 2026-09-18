@@ -1198,7 +1198,7 @@ Buffs: {
 
 	Ravenous: {
 		DisplayName: Ravenous
-		Description: You can't stop eating until the spirit's feast is finished!
+		Description: You can't stop eating! Weapons and items are unusable until the spirit's feast is finished.
 	}
 
 	GnomeLuck: {
