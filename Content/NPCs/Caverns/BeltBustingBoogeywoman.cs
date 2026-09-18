@@ -1,3 +1,4 @@
+using Terraria.ModLoader;
 using Terraria.ModLoader.Utilities;
 using WgMod.Common.Players;
 
