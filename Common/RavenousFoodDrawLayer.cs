@@ -35,7 +35,7 @@ public class RavenousFoodDrawLayer : PlayerDrawLayer
             null,
             Color.White,
             0f,
-            texture.Size() * 0.5f,
+            new Vector2(texture.Width, texture.Height) * 0.5f,
             1f,
             player.direction < 0 ? SpriteEffects.FlipHorizontally : SpriteEffects.None,
             0
