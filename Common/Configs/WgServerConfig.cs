@@ -18,4 +18,7 @@ public class WgServerConfig : ModConfig
 
     [DefaultValue(false)]
     public bool DisablePlayerPushing;
+
+    [DefaultValue(false)]
+    public bool AlwaysTriggerOnHitEffects;
 }
