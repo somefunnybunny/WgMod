@@ -86,6 +86,8 @@ partial class WgMod
                     fp.SyncPlayer(-1, whoAmI, false);
                 break;
             case MessageType.RavenousStart:
+                if (Main.netMode == NetmodeID.Server)
+                    break;
                 Player ravenousPlayer = Main.player[reader.ReadByte()];
                 RavenousPlayer.Start(ravenousPlayer, reader.ReadSingle());
                 break;
