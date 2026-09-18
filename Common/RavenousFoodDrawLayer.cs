@@ -13,7 +13,7 @@ public class RavenousFoodDrawLayer : PlayerDrawLayer
 {
     public override Position GetDefaultPosition()
     {
-        return new Between(PlayerDrawLayers.HeldItem, PlayerDrawLayers.ArmOverItem);
+        return new AfterParent(PlayerDrawLayers.HeldItem);
     }
 
     public override bool GetDefaultVisibility(PlayerDrawSet drawInfo) => true;
