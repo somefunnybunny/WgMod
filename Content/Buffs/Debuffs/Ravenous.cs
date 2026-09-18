@@ -86,7 +86,7 @@ public class RavenousPlayer : ModPlayer
             Player.ApplyItemAnimation(_visualFood);
 
         Rectangle heldItemFrame = Item.GetDrawHitbox(_visualFood.type, Player);
-        Player.ItemCheck_ApplyUseStyle(0f, _visualFood, heldItemFrame);
+        Player.ItemCheck_ApplyUseStyle(Player.HeightOffsetHitboxCenter, _visualFood, heldItemFrame);
 
         return true;
     }
