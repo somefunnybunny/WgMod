@@ -1118,6 +1118,11 @@ Buffs: {
 		Description: Indicates how much food has yet to be digested
 	}
 
+	SoulWeightBuff: {
+		DisplayName: Soul Weight
+		Description: "Permanent weight floor: {0}"
+	}
+
 	GainingBuff: {
 		DisplayName: Gaining
 		Description: Fattening over time
@@ -1298,7 +1303,7 @@ Configs: {
 
 		EnableSoulWeight: {
 			Label: Enable Soul Weight (Experimental)
-			Tooltip: Enables a permanent soul-weight floor; no automatic gameplay source increases soul weight yet
+			Tooltip: Enables a permanent soul-weight floor; 25% of feeding that overflows a full stomach becomes Soul Weight
 		}
 
 		SoulWeightMinimumStage: {
