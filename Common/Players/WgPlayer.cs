@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.Audio;
 using Terraria.DataStructures;
+using Terraria.Graphics.CameraModifiers;
 using Terraria.ID;
 using Terraria.ModLoader;
 using WgMod.Common.Configs;
@@ -372,6 +373,13 @@ public partial class WgPlayer : ModPlayer
             float volume = Weight.GetClampedFactor(WeightStage.MorbidlyObese, WeightStage.SoftImmobile) * 0.25f;
             if (volume > 0.01f)
                 SoundEngine.PlaySound(WgSounds.Thump.Build(volume), Player.Center);
+
+            int stepStage = Weight.GetStage();
+            if (OwnsPlayer() && stepStage >= WeightStage.Encumbered)
+            {
+                float strength = float.Lerp(0.5f, 2f, Weight.GetClampedFactor(WeightStage.Encumbered, WeightStage.Blob));
+                Main.instance.CameraModifiers.Add(new PunchCameraModifier(Player.Center, Vector2.UnitY, strength, 8f, 6, 1000f, "WgModHeavyStep"));
+            }
         }
         _lastLegFrame = frame;
 
