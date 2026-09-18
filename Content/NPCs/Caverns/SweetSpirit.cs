@@ -9,6 +9,7 @@ using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.ModLoader.Utilities;
 using WgMod.Common.Players;
+using WgMod.Content.Buffs.Debuffs;
 
 namespace WgMod.Content.NPCs.Caverns;
 
@@ -153,11 +154,21 @@ public class SweetSpirit : ModNPC
                     SetState(State.Wandering);
                 break;
             case State.Possess:
-                if (NPC.HasPlayerTarget && Main.player[NPC.target].TryGetModPlayer(out WgPlayer wg))
+                if (Main.netMode != NetmodeID.MultiplayerClient && NPC.HasPlayerTarget && Main.player[NPC.target].TryGetModPlayer(out WgPlayer wg))
                 {
+                    Player player = Main.player[NPC.target];
                     int stage = wg.Weight.GetStage();
                     Mass mass = (Weight.FromStage(stage + 1).Mass - Weight.FromStage(stage).Mass) * WeightGain + 10f;
-                    wg.CombatWeightText(wg.AddWeight(mass), false); // Add around half a stage worth of weight
+
+                    RavenousPlayer.Start(player, mass);
+
+                    if (Main.netMode == NetmodeID.Server)
+                    {
+                        ModPacket packet = Mod.GetPacket(WgMod.MessageType.RavenousStart);
+                        packet.Write((byte)player.whoAmI);
+                        packet.Write(mass.Value);
+                        packet.Send();
+                    }
                 }
                 NPC.life = 0;
                 break;
