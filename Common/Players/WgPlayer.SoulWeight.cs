@@ -1,13 +1,17 @@
 using System;
+using Microsoft.Xna.Framework;
+using Terraria;
 using WgMod.Common.Configs;
 
 namespace WgMod.Common.Players;
 
 public partial class WgPlayer
 {
+    public const float SoulWeightOverflowRatio = 0.25f;
+
     /// <summary>
     /// Permanent weight floor used by the optional Soul Weight system.
-    /// No gameplay source increases this yet; future mechanics should use AddSoulWeight.
+    /// Feeding overflow can increase it; future direct soul-affecting mechanics should use AddSoulWeight.
     /// </summary>
     public Weight SoulWeight { get; private set; } = Weight.Base;
 
@@ -67,5 +71,15 @@ public partial class WgPlayer
         SoulWeight = ClampSoulWeightToConfig(SoulWeight);
         if (Weight.Mass < SoulWeight.Mass)
             SetWeightForced(SoulWeight, false);
+    }
+
+    public void CombatSoulWeightText(Mass amount)
+    {
+        if (!OwnsPlayer() || amount <= 0f)
+            return;
+
+        Rectangle location = Player.getRect();
+        location.Y -= 24;
+        CombatText.NewText(location, Color.MediumPurple, $"Soul +{amount.ShortDisplay()}");
     }
 }
