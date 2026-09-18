@@ -11,7 +11,7 @@ public partial class WgPlayer
 
     /// <summary>
     /// Permanent weight floor used by the optional Soul Weight system.
-    /// No gameplay source increases this yet; future mechanics should use AddSoulWeight.
+    /// Feeding overflow can increase it; future direct soul-affecting mechanics should use AddSoulWeight.
     /// </summary>
     public Weight SoulWeight { get; private set; } = Weight.Base;
 
