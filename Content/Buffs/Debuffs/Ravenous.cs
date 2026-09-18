@@ -79,7 +79,7 @@ public class RavenousPlayer : ModPlayer
         if (!Active)
             return true;
 
-        _visualFood ??= new Item(ItemID.Cookie);
+        _visualFood ??= new Item(ItemID.ChocolateChipCookie);
         Player.lastVisualizedSelectedItem = _visualFood;
 
         if (Player.itemAnimation <= 1)
