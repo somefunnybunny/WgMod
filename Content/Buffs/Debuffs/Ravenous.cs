@@ -30,8 +30,7 @@ public class RavenousPlayer : ModPlayer
 
     Mass _remainingFeed;
     int _biteTimer;
-    Item _visualFood;
-
+ 
     public bool Active => _remainingFeed > 0f && Player.HasBuff(ModContent.BuffType<Ravenous>());
 
     public static void Start(Player player, Mass amount)
@@ -79,28 +78,6 @@ public class RavenousPlayer : ModPlayer
             Player.controlUseItem = false;
     }
 
-    public override bool PreItemCheck()
-    {
-        if (!Active)
-            return true;
-
-        EnsureVisualFood();
-        Player.lastVisualizedSelectedItem = _visualFood;
-
-        if (Player.itemAnimationMax != BiteCycleTicks)
-            Player.ApplyItemAnimation(_visualFood);
-
-        Player.itemAnimationMax = BiteCycleTicks;
-        Player.itemAnimation = Math.Max(BiteCycleTicks - _biteTimer, 1);
-
-        Rectangle heldItemFrame = Item.GetDrawHitbox(_visualFood.type, Player);
-        Player.ItemCheck_ApplyUseStyle(Player.HeightOffsetHitboxCenter, _visualFood, heldItemFrame);
-
-        // Ravenous owns the item animation while active. Skipping vanilla ItemCheck
-        // prevents the actually selected weapon/item from firing off the forced animation.
-        return false;
-    }
-
     public override void PostUpdateBuffs()
     {
         if (Player.dead)
@@ -145,25 +122,11 @@ public class RavenousPlayer : ModPlayer
         Clear();
     }
 
-    void EnsureVisualFood()
-    {
-        if (_visualFood != null)
-            return;
-
-        _visualFood = new Item(ItemID.ChocolateChipCookie)
-        {
-            useAnimation = BiteCycleTicks,
-            useTime = BiteCycleTicks,
-            autoReuse = false
-        };
-    }
-
     void PlayCrunch()
     {
-        EnsureVisualFood();
-
-        if (_visualFood.UseSound.HasValue)
-            SoundEngine.PlaySound(_visualFood.UseSound.Value, Player.Center);
+        Item cookie = new(ItemID.ChocolateChipCookie);
+        if (cookie.UseSound.HasValue)
+            SoundEngine.PlaySound(cookie.UseSound.Value, Player.Center);
 
         Vector2 mouth = Player.MouthPosition.Value + new Vector2(Player.direction * 4f, 0f);
         for (int i = 0; i < 6; i++)
@@ -173,12 +136,27 @@ public class RavenousPlayer : ModPlayer
         }
     }
 
+    public float BiteProgress => Math.Clamp(_biteTimer / (float)BiteCycleTicks, 0f, 1f);
+
+    public float EatingArmRotation
+    {
+        get
+        {
+            float raise = MathF.Sin(BiteProgress * MathF.PI);
+            return -Player.direction * float.Lerp(0.15f, 1.15f, raise);
+        }
+    }
+
+    public override void PostUpdate()
+    {
+        if (Active)
+            Player.SetCompositeArmFront(true, Player.CompositeArmStretchAmount.Full, EatingArmRotation);
+    }
+
     void Clear()
     {
         _remainingFeed = 0f;
         _biteTimer = 0;
-        Player.itemAnimation = 0;
-        Player.itemTime = 0;
         Player.ClearBuff(ModContent.BuffType<Ravenous>());
     }
 }
