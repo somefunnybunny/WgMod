@@ -54,6 +54,17 @@ public class RavenousPlayer : ModPlayer
         return !Active;
     }
 
+    public override void SyncPlayer(int toWho, int fromWho, bool newPlayer)
+    {
+        if (_remainingFeed <= 0f)
+            return;
+
+        ModPacket packet = Mod.GetPacket(WgMod.MessageType.RavenousStart);
+        packet.Write((byte)Player.whoAmI);
+        packet.Write(_remainingFeed.Value);
+        packet.Send(toWho, fromWho);
+    }
+
     public override bool PreItemCheck()
     {
         if (!Active)
