@@ -30,6 +30,12 @@ public class SweetSpirit : ModNPC
     public virtual int WanderTime => 8 * 60;
     public virtual float WeightGain => 0.5f;
 
+    public virtual Mass GetRavenousMass(WgPlayer wg)
+    {
+        int stage = wg.Weight.GetStage();
+        return (Weight.FromStage(stage + 1).Mass - Weight.FromStage(stage).Mass) * WeightGain + 10f;
+    }
+
     ref float Timer => ref NPC.ai[3];
 
     State _state;
@@ -157,8 +163,7 @@ public class SweetSpirit : ModNPC
                 if (Main.netMode != NetmodeID.MultiplayerClient && NPC.HasPlayerTarget && Main.player[NPC.target].TryGetModPlayer(out WgPlayer wg))
                 {
                     Player player = Main.player[NPC.target];
-                    int stage = wg.Weight.GetStage();
-                    Mass mass = (Weight.FromStage(stage + 1).Mass - Weight.FromStage(stage).Mass) * WeightGain + 10f;
+                    Mass mass = GetRavenousMass(wg);
 
                     RavenousPlayer.Start(player, mass);
 

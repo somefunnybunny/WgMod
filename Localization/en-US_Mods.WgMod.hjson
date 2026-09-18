@@ -1551,6 +1551,7 @@ NPCs: {
 	}
 
 	SugarSpecter.DisplayName: Sugar Specter
+	BeltBustingBoogeywoman.DisplayName: Belt-Busting Boogeywoman
 	SkeleborerHead.DisplayName: Skeleborer
 	SkeleborerBody.DisplayName: Skeleborer
 	SkeleborerTail.DisplayName: Skeleborer
@@ -1746,6 +1747,7 @@ Bestiary: {
 	HomingFood: Food cursed by a malevolent spirit to seek out and fatten up adventurers until they're defenseless.
 	SweetSpirit: These spirits that dwell in the caverns will try their best to fatten you up.
 	SugarSpecter: Specters made of condensed sugar and cotton candy. Kill them before they bloat you up in size...
+	BeltBustingBoogeywoman: A debug-only Sugar Specter with an absurd appetite and enough Ravenous feeding to test extreme stuffing behavior.
 	Skeleborer: Sometimes large amounts of ectoplasm coalesce, and come to life! She's haunted by the screaming of thousands of souls, but she doesn't really care.
 	EncumberedStatue: A statue that appears to be home to a ghost. Despite being unable to move, it seems content.
 	OverindulgentStatue: A haunted statue with exaggerated proportions. Not much else to say about it, really.
