@@ -127,7 +127,7 @@ public partial class WgPlayer : ModPlayer
         if (WgClientConfig.Instance.DisableWeightGain)
             mass = MathF.Min(mass, Stomach);
 
-        Mass overflow = MathF.Max(mass - StomachCapacity, 0f);
+        Mass overflow = MathF.Max(mass.Value - StomachCapacity, 0f);
         SetStomachForced(mass, effects);
 
         if (overflow > 0f && WgServerConfig.Instance.EnableSoulWeight)
@@ -184,6 +184,8 @@ public partial class WgPlayer : ModPlayer
         EnsureBuff<StomachBuff>();
         if (WgServerConfig.Instance.EnableSoulWeight)
             EnsureBuff<SoulWeightBuff>();
+        else
+            Player.ClearBuff(ModContent.BuffType<SoulWeightBuff>());
         if (Weight.GetStage() >= Tired.StartStage)
             Player.AddBuff(ModContent.BuffType<Tired>(), 2);
         if (Stomach > 0f && (Player.HasBuff(BuffID.NeutralHunger) || Player.HasBuff(BuffID.Hunger) || Player.HasBuff(BuffID.Starving)))
