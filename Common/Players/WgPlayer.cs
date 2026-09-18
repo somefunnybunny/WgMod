@@ -111,7 +111,7 @@ public partial class WgPlayer : ModPlayer
     internal void SetWeightForced(Weight weight, bool effects = true)
     {
         int prevStage = Weight.GetStage();
-        Weight = Weight.Clamp(weight);
+        Weight = ApplySoulWeightFloor(Weight.Clamp(weight));
         if (Weight.GetStage() != prevStage && effects)
         {
             SoundEngine.PlaySound(WgSounds.Belly, Player.Center);
@@ -155,6 +155,8 @@ public partial class WgPlayer : ModPlayer
         _finalWeightFixed = WeightFixed;
         WeightFixed = false;
         PreventImmobility = false;
+
+        UpdateSoulWeightFloor();
 
         // Jump detection
         if (Player.jump <= 0)
@@ -450,7 +452,9 @@ public partial class WgPlayer : ModPlayer
 
     public override void Kill(double damage, int hitDirection, bool pvp, PlayerDeathReason damageSource)
     {
-        SetWeight(new Weight(Weight.Mass * WeightValues.GetDeathPenalty(Player.difficulty)));
+        int lossPercent = Math.Clamp(WgServerConfig.Instance.DeathWeightLossPercent, 0, 100);
+        float retainedWeight = 1f - lossPercent / 100f;
+        SetWeight(new Weight(Weight.Mass * retainedWeight));
     }
 
     public override void ModifyHurt(ref Player.HurtModifiers modifiers)
