@@ -1284,6 +1284,11 @@ Configs: {
 			Label: Disable Player Pushing
 			Tooltip: Disables players pushing around other players and NPCs with their fat
 		}
+
+		AlwaysTriggerOnHitEffects: {
+			Label: Always Trigger On-Hit Effects
+			Tooltip: Makes chance-based WgMod effects from enemy and projectile hits trigger every time
+		}
 	}
 
 	WgClientConfig: {
@@ -1299,6 +1304,11 @@ Configs: {
 		DisableJiggle: {
 			Label: Disable Jiggle
 			Tooltip: Disables jiggle effects
+		}
+
+		HeavyStepScreenShake: {
+			Label: Heavy Step Screen Shake
+			Tooltip: Shakes the camera slightly on footsteps at Encumbered and higher weight stages
 		}
 
 		DisableUVClothes: {
