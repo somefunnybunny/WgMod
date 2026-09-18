@@ -79,11 +79,14 @@ public class RavenousPlayer : ModPlayer
         if (!Active)
             return true;
 
-        _visualFood ??= new Item(ItemID.Apple);
+        _visualFood ??= new Item(ItemID.Cookie);
         Player.lastVisualizedSelectedItem = _visualFood;
 
         if (Player.itemAnimation <= 1)
             Player.ApplyItemAnimation(_visualFood);
+
+        Rectangle heldItemFrame = Item.GetDrawHitbox(_visualFood.type, Player);
+        Player.ItemCheck_ApplyUseStyle(Player.HeightOffsetHitboxCenter, _visualFood, heldItemFrame);
 
         return true;
     }
