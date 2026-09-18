@@ -30,6 +30,9 @@ public class WgClientConfig : ModConfig
     [DefaultValue(false)]
     public bool DisableAdvancedJiggle;
 
+    [DefaultValue(true)]
+    public bool HeavyStepScreenShake;
+
     [DefaultValue(false)]
     public bool DisableUVClothes;
 
