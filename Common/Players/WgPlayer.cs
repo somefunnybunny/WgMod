@@ -375,7 +375,7 @@ public partial class WgPlayer : ModPlayer
                 SoundEngine.PlaySound(WgSounds.Thump.Build(volume), Player.Center);
 
             int stepStage = Weight.GetStage();
-            if (OwnsPlayer() && stepStage >= WeightStage.Encumbered)
+            if (OwnsPlayer() && WgClientConfig.Instance.HeavyStepScreenShake && stepStage >= WeightStage.Encumbered)
             {
                 float strength = float.Lerp(0.5f, 2f, Weight.GetClampedFactor(WeightStage.Encumbered, WeightStage.Blob));
                 Main.instance.CameraModifiers.Add(new PunchCameraModifier(Player.Center, Vector2.UnitY, strength, 8f, 6, 1000f, "WgModHeavyStep"));
