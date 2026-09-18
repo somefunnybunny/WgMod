@@ -1196,6 +1196,11 @@ Buffs: {
 		Description: You are being forced to eat against your will!
 	}
 
+	Ravenous: {
+		DisplayName: Ravenous
+		Description: You can't stop eating until the spirit's feast is finished!
+	}
+
 	GnomeLuck: {
 		DisplayName: Gnome Luck
 		Description:
