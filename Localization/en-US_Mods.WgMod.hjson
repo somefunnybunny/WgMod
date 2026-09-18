@@ -1269,6 +1269,7 @@ Configs: {
 	WgServerConfig: {
 		DisplayName: Wg Server Config
 		Headers.General: General settings
+		Headers.SoulWeight: Soul weight settings
 
 		DisableFatBuffs: {
 			Label: Disable Fat Buffs
@@ -1288,6 +1289,26 @@ Configs: {
 		AlwaysTriggerOnHitEffects: {
 			Label: Always Trigger On-Hit Effects
 			Tooltip: Makes chance-based WgMod effects from enemy and projectile hits trigger every time
+		}
+
+		DeathWeightLossPercent: {
+			Label: Weight Lost on Death
+			Tooltip: Percentage of the player's current weight lost on death
+		}
+
+		EnableSoulWeight: {
+			Label: Enable Soul Weight (Experimental)
+			Tooltip: Enables a permanent soul-weight floor; no automatic gameplay source increases soul weight yet
+		}
+
+		SoulWeightMinimumStage: {
+			Label: Minimum Soul Weight Stage
+			Tooltip: Lowest stage soul weight can use; raising this can immediately establish a permanent weight floor
+		}
+
+		SoulWeightMaximumStage: {
+			Label: Maximum Soul Weight Stage
+			Tooltip: Highest stage soul weight can reach; Barely Mobile is the default to avoid permanent immobility
 		}
 	}
 

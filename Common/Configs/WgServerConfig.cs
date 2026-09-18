@@ -21,4 +21,17 @@ public class WgServerConfig : ModConfig
 
     [DefaultValue(false)]
     public bool AlwaysTriggerOnHitEffects;
+
+    [Slider, DrawTicks, Increment(5), Range(0, 100), DefaultValue(20)]
+    public int DeathWeightLossPercent;
+
+    [Header("SoulWeight")]
+    [DefaultValue(false)]
+    public bool EnableSoulWeight;
+
+    [Slider, DrawTicks, Range(WeightStage.Regular, WeightStage.Max), DefaultValue(WeightStage.Regular)]
+    public int SoulWeightMinimumStage;
+
+    [Slider, DrawTicks, Range(WeightStage.Regular, WeightStage.Max), DefaultValue(WeightStage.BarelyMobile)]
+    public int SoulWeightMaximumStage;
 }
