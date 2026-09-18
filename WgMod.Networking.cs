@@ -6,6 +6,7 @@ using Terraria.ID;
 using Terraria.ModLoader;
 using WgMod.Common.Players;
 using WgMod.Common.Systems;
+using WgMod.Content.Buffs.Debuffs;
 using WgMod.Content.TileEntities;
 
 namespace WgMod;
@@ -20,7 +21,8 @@ partial class WgMod
         WgPlayerCombatWeightText,
         MannequinSetStage,
         FeedingTubeSetLiquid,
-        FeedingTubePlayerSync
+        FeedingTubePlayerSync,
+        RavenousStart
     }
 
     public override void HandlePacket(BinaryReader reader, int whoAmI)
@@ -82,6 +84,12 @@ partial class WgMod
                 fp.ReceivePlayerSync(reader);
                 if (Main.netMode == NetmodeID.Server)
                     fp.SyncPlayer(-1, whoAmI, false);
+                break;
+            case MessageType.RavenousStart:
+                if (Main.netMode == NetmodeID.Server)
+                    break;
+                Player ravenousPlayer = Main.player[reader.ReadByte()];
+                RavenousPlayer.Start(ravenousPlayer, reader.ReadSingle());
                 break;
             default:
                 Logger.WarnFormat("WgMod: Unknown Message type: {0}", type);
