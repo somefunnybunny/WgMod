@@ -3,6 +3,7 @@ using Terraria;
 using Terraria.Audio;
 using Terraria.ID;
 using Terraria.ModLoader;
+using WgMod.Common.Configs;
 
 namespace WgMod.Common.Players;
 
@@ -30,7 +31,7 @@ public partial class BuffHitPlayer : ModPlayer
 
     void AddBuff(int type, int timeToAdd, Mass weightGain, int chance)
     {
-        if (!Player.TryGetModPlayer(out WgPlayer wg) || !Main.rand.NextBool(chance))
+        if (!Player.TryGetModPlayer(out WgPlayer wg) || (!WgServerConfig.Instance.AlwaysTriggerOnHitEffects && !Main.rand.NextBool(chance)))
             return;
         Player.AddBuff(type, timeToAdd);
         weightGain = wg.AddWeight(weightGain);
