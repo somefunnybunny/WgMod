@@ -1297,8 +1297,8 @@ Configs: {
 		}
 
 		EnableSoulWeight: {
-			Label: Enable Soul Weight
-			Tooltip: Enables permanent soul weight that ordinary weight loss cannot reduce below
+			Label: Enable Soul Weight (Experimental)
+			Tooltip: Enables a permanent soul-weight floor; no automatic gameplay source increases soul weight yet
 		}
 
 		SoulWeightMinimumStage: {
