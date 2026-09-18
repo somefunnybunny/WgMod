@@ -18,7 +18,7 @@ public partial class WgPlayer : ModPlayer
 {
     public const int DigestTime = 60;
     public const float DigestAmount = 0.25f;
-    public const float StomachCapacity = 20f;
+    public const float StomachCapacity = 60f;
 
     /// <summary> The player's weight </summary>
     public Weight Weight { get; private set; } = Weight.Base;
@@ -126,7 +126,16 @@ public partial class WgPlayer : ModPlayer
             return;
         if (WgClientConfig.Instance.DisableWeightGain)
             mass = MathF.Min(mass, Stomach);
+
+        Mass overflow = MathF.Max(mass - StomachCapacity, 0f);
         SetStomachForced(mass, effects);
+
+        if (overflow > 0f && WgServerConfig.Instance.EnableSoulWeight)
+        {
+            Mass soulGain = AddSoulWeight(overflow * SoulWeightOverflowRatio, effects);
+            if (soulGain > 0f)
+                CombatSoulWeightText(soulGain);
+        }
     }
 
     public Mass AddStomach(Mass mass, bool effects = true)
@@ -173,6 +182,8 @@ public partial class WgPlayer : ModPlayer
     {
         EnsureBuff<FatBuff>();
         EnsureBuff<StomachBuff>();
+        if (WgServerConfig.Instance.EnableSoulWeight)
+            EnsureBuff<SoulWeightBuff>();
         if (Weight.GetStage() >= Tired.StartStage)
             Player.AddBuff(ModContent.BuffType<Tired>(), 2);
         if (Stomach > 0f && (Player.HasBuff(BuffID.NeutralHunger) || Player.HasBuff(BuffID.Hunger) || Player.HasBuff(BuffID.Starving)))
