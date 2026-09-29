@@ -56,6 +56,12 @@ public class FatBuff : WgBuffBase
             string line = this.GetLocalization("HitboxIncrease").Format((WeightValues.GetHitboxWidthInTiles(stage) - 2).Range(0, WeightValues.GetHitboxWidthInTiles(WeightStage.Max) - 2));
             tip += "\n" + line;
         }
+        if (stage == WeightStage.Encumbered)
+            tip += "\nYour arms are starting to struggle under your weight";
+        else if (stage == WeightStage.Immobile)
+            tip += "\nYour arms are barely usable and may soon give out";
+        else if (stage >= WeightStage.Blob)
+            tip += "\nYou're so fat your arms are practically useless";
     }
 
     public override void Update(Player player, ref int buffIndex)
